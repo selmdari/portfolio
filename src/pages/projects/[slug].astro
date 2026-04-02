@@ -1,0 +1,271 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map(project => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await project.render();
+const { title, summary, thumbnail, date, disciplines, processes, tools } = project.data;
+
+function pillClass(discipline: string): string {
+  const key = discipline.toLowerCase().replace(/\s+/g, '-');
+  const map: Record<string, string> = {
+    'hardware': 'hardware', 'electronics': 'electronics',
+    'firmware': 'firmware', 'robotics': 'robotics',
+    'design': 'design', 'fea': 'fea', 'structural': 'structural',
+    'civil': 'civil', 'mechanical': 'mechanical', 'software': 'software',
+  };
+  return map[key] ?? 'default';
+}
+---
+
+<Base title={`${title} — Soufiane El Mdari`} description={summary}>
+  <article>
+    <header class="project-header">
+      <a href="/" class="back-link">← All projects</a>
+
+      <h1>{title}</h1>
+      <p class="project-summary">{summary}</p>
+
+      <div class="meta-row">
+        <div class="pills">
+          {disciplines.map(d => (
+            <span class={`pill pill-${pillClass(d)}`}>{d}</span>
+          ))}
+        </div>
+        <span class="meta-date">{date}</span>
+      </div>
+
+      <div class="meta-blocks">
+        <div class="meta-block">
+          <p class="meta-label">Processes</p>
+          <p class="meta-value">{processes.join(' · ')}</p>
+        </div>
+        <div class="meta-block">
+          <p class="meta-label">Tools</p>
+          <p class="meta-value">{tools.join(' · ')}</p>
+        </div>
+      </div>
+
+      <div class="hero-image">
+        <img src={thumbnail} alt={title} />
+      </div>
+    </header>
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  article {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .project-header {
+    margin-bottom: 3.5rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-bottom: 2rem;
+    transition: color var(--transition);
+    letter-spacing: 0.02em;
+  }
+
+  .back-link:hover { color: var(--text-primary); }
+
+  h1 {
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 300;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+  }
+
+  .project-summary {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .pill {
+    font-size: 0.68rem;
+    font-weight: 400;
+    padding: 3px 9px;
+    border-radius: 99px;
+    letter-spacing: 0.03em;
+  }
+
+  .pill-hardware    { background: var(--pill-hardware);    color: var(--pill-hardware-text); }
+  .pill-electronics { background: var(--pill-electronics); color: var(--pill-electronics-text); }
+  .pill-firmware    { background: var(--pill-firmware);    color: var(--pill-firmware-text); }
+  .pill-robotics    { background: var(--pill-robotics);    color: var(--pill-robotics-text); }
+  .pill-design      { background: var(--pill-design);      color: var(--pill-design-text); }
+  .pill-fea         { background: var(--pill-fea);         color: var(--pill-fea-text); }
+  .pill-structural  { background: var(--pill-structural);  color: var(--pill-structural-text); }
+  .pill-civil       { background: var(--pill-civil);       color: var(--pill-civil-text); }
+  .pill-mechanical  { background: var(--pill-mechanical);  color: var(--pill-mechanical-text); }
+  .pill-software    { background: var(--pill-software);    color: var(--pill-software-text); }
+  .pill-default     { background: var(--pill-default);     color: var(--pill-default-text); }
+
+  .meta-date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-weight: 300;
+    white-space: nowrap;
+  }
+
+  .meta-blocks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 1.75rem;
+  }
+
+  .meta-label {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    font-weight: 400;
+  }
+
+  .meta-value {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .hero-image {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .hero-image img {
+    width: 100%;
+    max-height: 520px;
+    object-fit: cover;
+  }
+
+  /* Prose styles */
+  .prose {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    font-weight: 300;
+  }
+
+  .prose :global(h2) {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin: 2.5rem 0 0.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  .prose :global(h3) {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin: 2rem 0 0.5rem;
+  }
+
+  .prose :global(p) {
+    margin-bottom: 1.25rem;
+    color: var(--text-secondary);
+  }
+
+  .prose :global(em) {
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  .prose :global(strong) {
+    color: var(--text-primary);
+    font-weight: 400;
+  }
+
+  .prose :global(img) {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .prose :global(video) {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .prose :global(ul), .prose :global(ol) {
+    padding-left: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.35rem;
+    color: var(--text-secondary);
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    background: var(--bg-card);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .prose :global(blockquote) {
+    border-left: 2px solid var(--border-hover);
+    padding-left: 1.25rem;
+    margin: 1.5rem 0;
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  @media (max-width: 600px) {
+    .meta-blocks { grid-template-columns: 1fr; }
+  }
+</style>

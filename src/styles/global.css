@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111111;
+  --bg-hover: #161616;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.14);
+  --text-primary: #f0ede8;
+  --text-secondary: rgba(240,237,232,0.45);
+  --text-tertiary: rgba(240,237,232,0.25);
+  --accent: #e8e0d0;
+
+  --pill-hardware:    #1a2e1a; --pill-hardware-text:    #6db86d;
+  --pill-electronics: #1a1a2e; --pill-electronics-text: #6d6db8;
+  --pill-firmware:    #2e1a1a; --pill-firmware-text:    #b86d6d;
+  --pill-robotics:    #1a2a2e; --pill-robotics-text:    #5aaab8;
+  --pill-design:      #2a1a2e; --pill-design-text:      #a06db8;
+  --pill-fea:         #2e2a1a; --pill-fea-text:         #b8a05a;
+  --pill-structural:  #2e2a1a; --pill-structural-text:  #b8a05a;
+  --pill-civil:       #1a2e28; --pill-civil-text:       #5ab8a0;
+  --pill-mechanical:  #2e1e1a; --pill-mechanical-text:  #b8825a;
+  --pill-software:    #1e1a2e; --pill-software-text:    #7a6db8;
+  --pill-default:     #1e1e1e; --pill-default-text:     #888;
+
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+
+img { max-width: 100%; display: block; }
+
+h1, h2, h3, h4 {
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+p { color: var(--text-secondary); }
+
+::selection { background: rgba(240,237,232,0.15); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }

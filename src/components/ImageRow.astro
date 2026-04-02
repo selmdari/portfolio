@@ -1,0 +1,47 @@
+---
+export interface Props {
+  caption?: string;
+}
+const { caption } = Astro.props;
+---
+
+<figure class="image-row">
+  <div class="row-inner">
+    <slot />
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .image-row {
+    margin: 2rem 0;
+  }
+
+  .row-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .row-inner :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+
+  figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .row-inner {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

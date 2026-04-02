@@ -1,0 +1,94 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Soufiane El Mdari',
+  description = 'Engineering portfolio — Hardware, Electronics & Robotics',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/" class="nav-name">Soufiane El Mdari</a>
+        <span class="nav-descriptor">Hardware · Electronics · Robotics</span>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <span>© {new Date().getFullYear()} Soufiane El Mdari</span>
+    </footer>
+  </body>
+</html>
+
+<style>
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .nav-name {
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--text-primary);
+    transition: opacity var(--transition);
+  }
+
+  .nav-name:hover { opacity: 0.6; }
+
+  .nav-descriptor {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 300;
+  }
+</style>
