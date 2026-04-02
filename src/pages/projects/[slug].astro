@@ -55,7 +55,7 @@ function pillClass(discipline: string): string {
       </div>
 
       <div class="hero-image">
-        <img src={import.meta.env.BASE_URL + thumbnail.replace(/^\//, '')} alt={title} />
+        <img src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${thumbnail.replace(/^\//, '')}`} alt={title} />
       </div>
     </header>
 
