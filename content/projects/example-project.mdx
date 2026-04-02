@@ -23,7 +23,7 @@ More context on the problem you were solving. What constraints existed, what the
 
 Walk through your methodology. What tools did you use and why? What assumptions did you make? How did you set up the model or design the system?
 
-import ImageRow from '../../components/ImageRow.astro';
+import ImageRow from '../../src/components/ImageRow.astro';
 
 <ImageRow caption="Left: cable stress distribution. Right: first mode shape at 1.4 Hz.">
   ![Cable stress distribution](/images/projects/bridge/cable-stress.jpg)
@@ -38,7 +38,7 @@ What did you find? Lead with the most interesting or surprising result. Use spec
 
 One or two sentences on what you'd do differently, or what this project taught you. Optional but makes the write-up feel less like a spec sheet and more like an engineer talking about their work.
 
-import ModelViewer from '../../components/ModelViewer.astro';
+import ModelViewer from '../../src/components/ModelViewer.astro';
 
 <ModelViewer
   src="/models/bridge.glb"
