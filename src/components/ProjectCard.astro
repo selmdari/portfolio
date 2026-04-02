@@ -31,7 +31,7 @@ function pillClass(discipline: string): string {
 }
 ---
 
-<a href={import.meta.env.BASE_URL + 'projects/' + slug} class:list={['card', { featured }]}>
+<a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/projects/${slug}`} class:list={['card', { featured }]}>
   <div class="thumb">
     <img src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${thumbnail.replace(/^\//, '')}`} alt={title} loading="lazy" />
     <div class="overlay">
