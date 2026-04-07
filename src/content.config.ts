@@ -10,7 +10,7 @@ const projects = defineCollection({
     date: z.string(),
     disciplines: z.array(z.string()),
     processes: z.array(z.string()),
-    tools: z.array(z.string()),
+    tools: z.array(z.string()).optional().default([]),
     featured: z.boolean().optional().default(false),
   }),
 });
