@@ -16,7 +16,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
 <script>
   document.querySelectorAll<HTMLElement>('.splat-wrap').forEach((wrap) => {
-    const url    = wrap.dataset.splatUrl!;
+    const url    = new URL(wrap.dataset.splatUrl!, window.location.origin).href;
     const mount  = wrap.querySelector<HTMLElement>('.splat-mount')!;
     const status = wrap.querySelector<HTMLElement>('.splat-status')!;
     const hint   = wrap.querySelector<HTMLElement>('.splat-hint')!;
