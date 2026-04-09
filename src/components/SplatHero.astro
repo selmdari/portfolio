@@ -25,13 +25,6 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
       try {
         const { Viewer } = await import('@mkkellogg/gaussian-splats-3d');
 
-        // Temporary: expose the real error before updateError wraps it
-        const _origUpdateError = (Viewer as any).prototype.updateError;
-        (Viewer as any).prototype.updateError = function(error: unknown, msg: string) {
-          console.error('[SplatHero] underlying error:', error);
-          return _origUpdateError.call(this, error, msg);
-        };
-
         await new Promise<void>(r => requestAnimationFrame(() => r()));
 
         const w = mount.clientWidth;
@@ -49,6 +42,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
           splatAlphaRemovalThreshold: 1,
           showLoadingUI: false,
           rotation: [0, 0, 1, 0],
+          headers: { 'Accept-Encoding': 'identity' },
         });
 
         status.textContent = '';
