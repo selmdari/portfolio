@@ -23,7 +23,15 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
     (async () => {
       try {
-        const { Viewer } = await import('@mkkellogg/gaussian-splats-3d');
+        const { Viewer, SceneFormat } = await import('@mkkellogg/gaussian-splats-3d');
+
+        // Pre-fetch the splat into a Blob so the library receives the fully
+        // decompressed bytes from a blob URL. This avoids the CDN gzip mismatch
+        // where Content-Length reports the compressed size but fetch() delivers
+        // the larger decompressed payload, causing a buffer overflow in the library.
+        const fileResp = await fetch(url);
+        if (!fileResp.ok) throw new Error(`HTTP ${fileResp.status} fetching splat`);
+        const blobUrl = URL.createObjectURL(await fileResp.blob());
 
         await new Promise<void>(r => requestAnimationFrame(() => r()));
 
@@ -38,12 +46,14 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
           initialCameraPosition: [0, 7, 10],
         });
 
-        await viewer.addSplatScene(url, {
+        await viewer.addSplatScene(blobUrl, {
           splatAlphaRemovalThreshold: 1,
           showLoadingUI: false,
           rotation: [0, 0, 1, 0],
-
+          format: SceneFormat.Splat,
         });
+
+        URL.revokeObjectURL(blobUrl);
 
         status.textContent = '';
         hint.removeAttribute('hidden');
