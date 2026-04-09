@@ -1,0 +1,10 @@
+---
+interface Props {
+  src: string;
+  alt?: string;
+  [key: string]: unknown;
+}
+const { src, alt, ...rest } = Astro.props;
+const prefixed = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${src.replace(/^\//, '')}`;
+---
+<img src={prefixed} alt={alt} {...rest} />

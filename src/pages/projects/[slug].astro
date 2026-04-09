@@ -1,6 +1,8 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import MdxImage from '../../components/MdxImage.astro';
+import SplatHero from '../../components/SplatHero.astro';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects');
@@ -12,7 +14,7 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
-const { title, summary, thumbnail, date, disciplines, processes, tools } = project.data;
+const { title, summary, thumbnail, date, disciplines, processes, tools, splat } = project.data;
 
 function pillClass(discipline: string): string {
   const key = discipline.toLowerCase().replace(/\s+/g, '-');
@@ -43,24 +45,16 @@ function pillClass(discipline: string): string {
         <span class="meta-date">{date}</span>
       </div>
 
-      <div class="meta-blocks">
-        <div class="meta-block">
-          <p class="meta-label">Processes</p>
-          <p class="meta-value">{processes.join(' · ')}</p>
-        </div>
-        <div class="meta-block">
-          <p class="meta-label">Tools</p>
-          <p class="meta-value">{tools.join(' · ')}</p>
-        </div>
-      </div>
-
       <div class="hero-image">
-        <img src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${thumbnail.replace(/^\//, '')}`} alt={title} />
+        {splat
+          ? <SplatHero splat={splat} title={title} />
+          : <img src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${thumbnail.replace(/^\//, '')}`} alt={title} />
+        }
       </div>
     </header>
 
     <div class="prose">
-      <Content />
+      <Content components={{ img: MdxImage }} />
     </div>
   </article>
 </Base>
@@ -143,34 +137,6 @@ function pillClass(discipline: string): string {
     font-family: var(--font-mono);
     font-weight: 300;
     white-space: nowrap;
-  }
-
-  .meta-blocks {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding: 1.1rem 1.25rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    margin-bottom: 1.75rem;
-  }
-
-  .meta-label {
-    font-size: 0.65rem;
-    color: var(--text-tertiary);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 0.25rem;
-    font-weight: 400;
-  }
-
-  .meta-value {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-weight: 300;
-    line-height: 1.5;
   }
 
   .hero-image {

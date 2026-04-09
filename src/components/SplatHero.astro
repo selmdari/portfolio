@@ -1,0 +1,120 @@
+---
+interface Props {
+  splat: string;
+  title: string;
+}
+const { splat } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
+---
+
+<div class="splat-wrap" data-splat-url={splatUrl}>
+  <div class="splat-mount"></div>
+  <div class="splat-status">Loading 3D scan…</div>
+  <div class="splat-hint" hidden>Drag to rotate · Scroll to zoom</div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.splat-wrap').forEach((wrap) => {
+    const url    = wrap.dataset.splatUrl!;
+    const mount  = wrap.querySelector<HTMLElement>('.splat-mount')!;
+    const status = wrap.querySelector<HTMLElement>('.splat-status')!;
+    const hint   = wrap.querySelector<HTMLElement>('.splat-hint')!;
+
+    (async () => {
+      try {
+        const { Viewer } = await import('@mkkellogg/gaussian-splats-3d');
+
+        await new Promise<void>(r => requestAnimationFrame(() => r()));
+
+        const w = mount.clientWidth;
+        mount.style.height = `${w}px`;
+
+        const viewer = new Viewer({
+          selfDrivenMode: true,
+          sharedMemoryForWorkers: false,
+          gpuAcceleratedSort: false,
+          rootElement: mount,
+          initialCameraPosition: [0, 7, 10],
+        });
+
+        await viewer.addSplatScene(url, {
+          splatAlphaRemovalThreshold: 1,
+          showLoadingUI: false,
+          rotation: [0, 0, 1, 0],
+        });
+
+        status.textContent = '';
+        hint.removeAttribute('hidden');
+
+        const controls = (viewer as any).controls;
+        if (controls) {
+          // No viewing from below the model
+          controls.maxPolarAngle = Math.PI / 2;
+
+          // Slow auto-orbit; stops the moment the user grabs the scene
+          controls.autoRotate = true;
+          controls.autoRotateSpeed = 1.0;
+          mount.addEventListener('pointerdown', () => {
+            controls.autoRotate = false;
+            hint.style.opacity = '0';
+          }, { once: true });
+        }
+
+        viewer.start();
+
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        status.textContent = `3D scan failed to load: ${msg}`;
+        console.error('[SplatHero]', err);
+      }
+    })();
+  });
+</script>
+
+<style>
+  .splat-wrap {
+    position: relative;
+    width: 100%;
+    background: #0a0a0a;
+  }
+
+  .splat-mount {
+    width: 100%;
+    /* height driven by JS: min(clientWidth, 520) */
+  }
+
+  .splat-mount :global(canvas) {
+    display: block;
+  }
+
+  .splat-status {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .splat-hint {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+
+  .splat-hint[hidden] {
+    display: none;
+  }
+</style>

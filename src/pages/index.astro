@@ -7,10 +7,6 @@ const allProjects = await getCollection('projects');
 const projects = allProjects.sort((a, b) =>
   new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
-
-const allDisciplines = [...new Set(
-  projects.flatMap(p => p.data.disciplines)
-)].sort();
 ---
 
 <Base title="Soufiane El Mdari — Engineering Portfolio">
@@ -19,64 +15,22 @@ const allDisciplines = [...new Set(
     <p class="hero-sub">Hardware · Electronics · Firmware · Robotics · Design</p>
   </section>
 
-  <div class="filter-bar" id="filter-bar">
-    <button class="filter-btn active" data-filter="all">All</button>
-    {allDisciplines.map(d => (
-      <button class="filter-btn" data-filter={d.toLowerCase()}>{d}</button>
-    ))}
-  </div>
-
   <div class="grid" id="project-grid">
     {projects.map(project => (
-      <div
-        class="grid-item"
-        data-disciplines={project.data.disciplines.map(d => d.toLowerCase()).join(',')}
-      >
-        <ProjectCard
-          title={project.data.title}
-          summary={project.data.summary}
-          thumbnail={project.data.thumbnail}
-          date={project.data.date}
-          disciplines={project.data.disciplines}
-          processes={project.data.processes}
-          tools={project.data.tools}
-          slug={project.id}
-          featured={project.data.featured}
-        />
-      </div>
+      <ProjectCard
+        title={project.data.title}
+        summary={project.data.summary}
+        thumbnail={project.data.thumbnail}
+        date={project.data.date}
+        disciplines={project.data.disciplines}
+        processes={project.data.processes}
+        tools={project.data.tools}
+        slug={project.id}
+        featured={project.data.featured}
+      />
     ))}
   </div>
-
-  <p class="empty-state" id="empty-state" style="display:none">
-    No projects found for this filter.
-  </p>
 </Base>
-
-<script>
-  const filterBar = document.getElementById('filter-bar');
-  const items = document.querySelectorAll<HTMLElement>('.grid-item');
-  const emptyState = document.getElementById('empty-state');
-
-  filterBar?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('.filter-btn') as HTMLButtonElement | null;
-    if (!btn) return;
-
-    filterBar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    const filter = btn.dataset.filter ?? 'all';
-    let visible = 0;
-
-    items.forEach(item => {
-      const disciplines = item.dataset.disciplines ?? '';
-      const show = filter === 'all' || disciplines.split(',').includes(filter);
-      item.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
-
-    if (emptyState) emptyState.style.display = visible === 0 ? 'block' : 'none';
-  });
-</script>
 
 <style>
   .hero {
@@ -101,58 +55,13 @@ const allDisciplines = [...new Set(
     margin: 0;
   }
 
-  .filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-bottom: 2rem;
-  }
-
-  .filter-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 300;
-    padding: 0.35rem 0.85rem;
-    border-radius: 99px;
-    cursor: pointer;
-    transition: all var(--transition);
-    letter-spacing: 0.02em;
-  }
-
-  .filter-btn:hover {
-    border-color: var(--border-hover);
-    color: var(--text-primary);
-  }
-
-  .filter-btn.active {
-    background: var(--text-primary);
-    border-color: var(--text-primary);
-    color: var(--bg);
-    font-weight: 400;
-  }
-
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.75rem;
   }
 
-  .empty-state {
-    text-align: center;
-    color: var(--text-tertiary);
-    font-size: 0.85rem;
-    padding: 4rem 0;
-    margin: 0;
-  }
-
-  @media (max-width: 900px) {
-    .grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  @media (max-width: 560px) {
+  @media (max-width: 700px) {
     .grid { grid-template-columns: 1fr; }
   }
 </style>

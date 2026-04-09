@@ -23,6 +23,7 @@ processes:
   - PCB layout
   - MQTT integration
 featured: true
+splat: /images/projects/automated-pill-dispenser/pill-dispenser.splat
 ---
 
 ## TL;DR
@@ -50,24 +51,18 @@ The redesign discarded active orientation control entirely. The question became:
 The answer is a continuous curving channel, a flowing sinusoidal path with no hard corners. Each curve constrains the capsule against the channel wall at a contact geometry that limits tilt to a maximum of 15 degrees. At 15 degrees, a capsule cannot reach horizontal. Jamming requires horizontal. The failure mode is eliminated by geometry, not by sensing or correction.
 
 ![Magazine channel cross-section with capsule in position, annotated contact points and 15-degree tilt limit](/images/projects/automated-pill-dispenser/magazine-channel-cross-section.jpg)
-{/* TODO: replace with actual image path */}
 
 The 15-degree limit was a design target, not a derived figure. The channel was tightened until tilt to horizontal became geometrically impossible, then validated in SolidWorks before printing. Magazine capacity, 34 pills covering one month at one per day, was an equation-driven parameter in the model. Changing the target count updated the full geometry automatically.
 
 The curving path has a second consequence: it collapses a 34-pill feed path into a smaller vertical footprint than a straight magazine requires. Capacity and height are partially decoupled.
 
-![Magazine front view with pills loaded showing full sinusoidal channel geometry](/images/projects/automated-pill-dispenser/magazine-loaded-front.jpg)
-{/* TODO: replace with actual image path */}
 
 ### Dispensing mechanism
 
 A single rotating cylinder, driven by one motor, serves both magazines. Which magazine dispenses is a function of rotation direction and move sequence, not a second actuator. Moving part count is one motor and one cylinder.
 
-![Base assembly 3/4 rear view showing rotating cylinder and both magazine exits](/images/projects/automated-pill-dispenser/base-assembly-rear.jpg)
-{/* TODO: replace with actual image path */}
+![Base assembly 3/4 rear view showing rotating cylinder and both magazine exits](/images/projects/automated-pill-dispenser/dispense-sequence.jpg)
 
-![CAD motion study of dispensing cylinder rotation sequence for magazine 1 vs magazine 2](/images/projects/automated-pill-dispenser/cylinder-motion-study.jpg)
-{/* TODO: replace with actual image path */}
 
 ### Structural design
 
