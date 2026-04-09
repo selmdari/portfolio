@@ -47,6 +47,12 @@ if (typeof window === 'undefined') {
                         newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
                     }
                     newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+                    // Strip Content-Length for .splat files: the CDN gzip-compresses them,
+                    // so Content-Length reflects the compressed size while the fetch API
+                    // returns decompressed bytes — causing a buffer overflow in the viewer.
+                    if (event.request.url.endsWith('.splat')) {
+                        newHeaders.delete("Content-Length");
+                    }
 
                     return new Response(response.body, {
                         status: response.status,
