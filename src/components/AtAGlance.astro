@@ -1,0 +1,36 @@
+---
+---
+<div class="at-a-glance">
+  <span class="label">At a glance</span>
+  <div class="content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .at-a-glance {
+    background: #171717;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin: 2rem 0 2.75rem;
+  }
+
+  .label {
+    display: block;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(240, 237, 232, 0.28);
+    margin-bottom: 0.85rem;
+    font-family: var(--font-mono);
+  }
+
+  .content :global(p) {
+    font-size: 1.0rem;
+    line-height: 1.85;
+    color: rgba(240, 237, 232, 0.6);
+    margin: 0;
+    font-weight: 300;
+  }
+</style>

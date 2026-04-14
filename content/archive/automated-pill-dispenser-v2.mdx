@@ -1,0 +1,108 @@
+---
+title: Automated Pill Dispenser Prototype
+summary: A fully autonomous pill dispenser that uses curving magazine geometry to prevent capsule jams, a single motor to serve two magazines through motion sequencing, and a light sensor to confirm dispensing and pickup.
+thumbnail: /images/projects/automated-pill-dispenser/thumbnail.jpg
+date: 2025-04
+disciplines:
+  - CAD
+  - Electronics
+  - Firmware
+  - Design
+tools:
+  - SolidWorks
+  - KiCad
+  - ESP8266
+  - Home Assistant
+  - MQTT
+  - FDM
+processes:
+  - FDM part design for zero-support printing
+  - Print-in-place hinge design
+  - Equation-driven parametric modelling
+  - Spur gear sizing
+  - Trapezoidal motion profiling
+  - Encoder-based position feedback
+  - Ambient light sensor baselining and differential detection
+  - MOSFET-switched output circuit
+  - PCB layout
+  - MQTT integration
+featured: true
+splat: /images/projects/automated-pill-dispenser/pill-dispenser.splat
+---
+
+import AtAGlance from '../../src/components/AtAGlance.astro';
+
+<AtAGlance>
+
+A desk-sized pill dispenser that runs on a daily schedule, dispenses autonomously, and confirms pickup — deployed and running since April 2025. The core design problem was eliminating capsule jams without adding sensors or active correction. The solution: a curving sinusoidal magazine channel that makes tilt past 15 degrees geometrically impossible. One closed-loop DC motor serves two magazines through motion sequencing, and an ambient light sensor confirms both dispensing and user pickup via differential detection. Events log to Home Assistant over MQTT.
+
+</AtAGlance>
+
+## Motivation
+
+A reliable daily pill dispenser needs to dose on schedule, alert pickup, and confirm the pill was taken — small enough to sit on a desk. Manual pill boxes require weekly refilling and provide no confirmation. Automated dispensers at the high end target institutional, high-volume environments and are priced accordingly. Nothing existed at the point on that spectrum that made sense for single-user home use.
+
+The constraint that shaped every downstream decision: any failure rate above zero is a system failure. A missed dose is not a degraded outcome.
+
+## Mechanical system
+
+### The capsule stacking problem
+
+The core challenge with cylindrical capsules in a vertical magazine is unconstrained tilt. A capsule that rotates past horizontal jams the feed path.
+
+The first iteration attempted vibration-based orientation: an offset weight on the dispensing motor axis, driven through a rapid back-and-forth routine in a funnel-style hopper. It failed for two reasons:
+
+1. Vibration-based orientation is inherently probabilistic.
+2. Gelatin capsule coatings exhibit high friction depending on packing pressure, funnel material, and surface roughness.
+
+The redesign discarded active orientation entirely. The question became: what geometry makes horizontal tilt physically impossible rather than statistically unlikely?
+
+### Magazine geometry
+
+The magazine uses a continuous curving channel — a sinusoidal path that constrains each capsule against the wall, limiting tilt to ~15 degrees. At that angle, a capsule cannot reach vertical; it re-centres horizontally under gravity. The failure mode was eliminated by geometry, not by sensing or correction.
+
+![Magazine channel cross-section with capsule in position, annotated contact points and 15-degree tilt limit](/images/projects/automated-pill-dispenser/magazine-channel-cross-section.jpg)
+
+The 15-degree limit was a design target, not a derived figure. The channel cross-section was tightened until tilt to vertical became geometrically impossible, then validated in CAD before printing. Capacity is 34 pills — one month at one per day plus a four-pill buffer. The curving path also collapses the feed path into a smaller vertical footprint.
+
+### Dispensing mechanism
+
+A single rotating cylinder serves both magazines. Rotation direction and move sequence determine which magazine dispenses. The barrel has two slots 180 degrees apart, one per pill.
+
+![Motion diagram showing the dispensing sequence for each pill](/images/projects/automated-pill-dispenser/dispense-sequence.jpg)
+
+### Structural design
+
+Base and magazine are monolithic printed parts requiring no support structures. Print orientation for FDM was a primary design constraint. The lid uses a print-in-place hinge. The front panel is acrylic — dust protection with internal visibility so pill count is readable at a glance.
+
+## Actuation and control
+
+A geared DC motor drives the dispensing cylinder through a custom spur gear sized for the required torque and speed. Position feedback uses an AS5600 absolute magnetic encoder. Absolute reference within the sub-360-degree working range means no cumulative error and no re-homing after power cycles.
+
+The motion profile is trapezoidal with controlled acceleration and deceleration to reduce mechanical noise. Full PID was evaluated and rejected: at low speed with low disturbance loads, open-loop motion profiling with encoder confirmation is sufficient.
+
+On startup the system moves to a known home reference. Dispense cycles are triggered by MQTT commands from Home Assistant on a user-defined schedule.
+
+## System states and verification
+
+![System state diagram: Idle, Dispense Triggered, Cylinder Moving, Awaiting Occlusion, Pill Detected, Awaiting Pickup, Confirmed, Error, with transitions annotated with trigger conditions and timeout logic](/images/projects/automated-pill-dispenser/system-state-diagram.svg)
+
+Before each cycle, the sensor samples a baseline ambient light reading. When the dispensed pill drops, it occludes the sensor. The differential confirms the pill left the magazine. A flashing LED signals that the pill is ready. When removed, the sensor returns to baseline, the indicator clears, and the pickup event logs to Home Assistant.
+
+If no occlusion is detected after a completed dispense cycle, the system logs an error. The failure mode is visible and recorded.
+
+## Electronics
+
+The PCB is a general-purpose board designed and manufactured for a previous project. It follows a template used across multiple builds: ESP8266 MCU as a removable module, 9–12V barrel jack input, LM7805 linear regulator, MOSFET-switched output for peripherals above logic voltage, and header breakouts for I2C and GPIO. The switched output here drives the 12V LED indicator.
+
+![PCB with MCU module seated showing MOSFET outputs, header breakouts, and module connector](/images/projects/automated-pill-dispenser/pcb-mcu-seated.jpg)
+
+The board has known weaknesses. Ground management uses a stitched fill with manual vias rather than a dedicated ground plane. The LM7805 is adequate for the MCU's low power draw but thermally inefficient compared to a buck converter. The ESP8266 is now largely deprecated in favour of newer Espressif modules. Unused board area increases unit cost and reduces panel density for fabrication. A future revision would target a smaller footprint, USB-C PD input, buck regulation, and an ESP32 with Zigbee/Thread for native Home Assistant integration.
+
+## Result
+
+![Automated Pill Dispenser](/images/projects/automated-pill-dispenser/thumbnail.jpg)
+
+The system has run autonomously on a daily schedule since April 2025 with zero missed doses. Pill count at each refill has matched the expected count every cycle, confirming consistent mechanical and sensing performance over sustained use.
+
+**Scope boundary:** Designed and deployed for single-user personal use. Sensing logic handles the intended operating conditions reliably. Ambient light variation across environments, alternate capsule geometries, and multi-user operation are not addressed and would require further development.

@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import MdxImage from '../../components/MdxImage.astro';
 import SplatHero from '../../components/SplatHero.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects');
@@ -13,8 +14,8 @@ export async function getStaticPaths() {
 }
 
 const { project } = Astro.props;
-const { Content } = await render(project);
-const { title, summary, thumbnail, date, disciplines, processes, tools, splat } = project.data;
+const { Content, headings } = await render(project);
+const { title, summary, thumbnail, date, disciplines, splat, showToc } = project.data;
 
 function pillClass(discipline: string): string {
   const key = discipline.toLowerCase().replace(/\s+/g, '-');
@@ -31,7 +32,9 @@ function pillClass(discipline: string): string {
 <Base title={`${title} — Soufiane El Mdari`} description={summary}>
   <article>
     <header class="project-header">
-      <a href={import.meta.env.BASE_URL} class="back-link">← All projects</a>
+      {!showToc && (
+        <a href={import.meta.env.BASE_URL} class="back-link">← All projects</a>
+      )}
 
       <h1>{title}</h1>
       <p class="project-summary">{summary}</p>
@@ -53,18 +56,62 @@ function pillClass(discipline: string): string {
       </div>
     </header>
 
-    <div class="prose">
-      <Content components={{ img: MdxImage }} />
-    </div>
+    {showToc ? (
+      <div class="content-layout">
+        <div class="prose">
+          <Content components={{ img: MdxImage }} />
+        </div>
+        <aside class="toc-aside" id="toc-aside">
+          <TableOfContents headings={headings} />
+        </aside>
+      </div>
+    ) : (
+      <div class="prose prose-solo">
+        <Content components={{ img: MdxImage }} />
+      </div>
+    )}
   </article>
 </Base>
 
+{showToc && (
+  <script is:inline>
+    // On mobile, move the TOC to appear right after the At A Glance box.
+    // On desktop it lives inside .content-layout as a flex sibling of .prose.
+    (function () {
+      const mq = window.matchMedia('(max-width: 767px)');
+
+      function positionToc() {
+        const toc = document.getElementById('toc-aside');
+        const atAGlance = document.querySelector('.at-a-glance');
+        const contentLayout = document.querySelector('.content-layout');
+        if (!toc || !atAGlance || !contentLayout) return;
+
+        if (mq.matches) {
+          // Insert immediately after .at-a-glance (inside .prose)
+          atAGlance.insertAdjacentElement('afterend', toc);
+        } else {
+          // Return to .content-layout as the second flex child
+          if (toc.parentElement !== contentLayout) {
+            contentLayout.appendChild(toc);
+          }
+        }
+      }
+
+      positionToc();
+      mq.addEventListener('change', positionToc);
+    })();
+  </script>
+)}
+
 <style>
+  /* ── Article shell ─────────────────────────────────────────────────────── */
+  /* Base.astro's <main> already provides max-width: 1200px + margin: 0 auto.
+     The article fills that container; the two-column layout centers itself. */
   article {
-    max-width: 780px;
-    margin: 0 auto;
+    width: 100%;
   }
 
+  /* ── Project header ────────────────────────────────────────────────────── */
   .project-header {
     margin-bottom: 3.5rem;
   }
@@ -151,15 +198,49 @@ function pillClass(discipline: string): string {
     object-fit: cover;
   }
 
-  /* Prose styles */
-  .prose {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.8;
-    font-weight: 300;
+  /* ── Two-column layout (with TOC) ──────────────────────────────────────── */
+  .content-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start; /* lets sticky TOC stop at article end */
+    gap: 3rem;
   }
 
-  .prose :global(h2) {
+  .prose {
+    flex: 1;
+    min-width: 0; /* prevents flex overflow */
+  }
+
+  .toc-aside {
+    width: 200px;
+    flex-shrink: 0;
+    position: sticky;
+    top: calc(56px + 2rem); /* header height + breathing room */
+  }
+
+  /* ── Prose-only layout (no TOC) ────────────────────────────────────────── */
+  .prose-solo {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  /* ── Mobile ─────────────────────────────────────────────────────────────── */
+  @media (max-width: 767px) {
+    .content-layout {
+      flex-direction: column;
+    }
+
+    /* TOC is moved by JS to appear after .at-a-glance;
+       reset sticky and width so it flows as a block. */
+    .toc-aside {
+      width: 100%;
+      position: static;
+    }
+  }
+
+  /* ── Prose styles ───────────────────────────────────────────────────────── */
+  .prose :global(h2),
+  .prose-solo :global(h2) {
     font-size: 1.2rem;
     font-weight: 400;
     color: var(--text-primary);
@@ -167,53 +248,71 @@ function pillClass(discipline: string): string {
     letter-spacing: -0.02em;
   }
 
-  .prose :global(h3) {
+  .prose :global(h3),
+  .prose-solo :global(h3) {
     font-size: 1rem;
     font-weight: 400;
     color: var(--text-primary);
     margin: 2rem 0 0.5rem;
   }
 
-  .prose :global(p) {
+  .prose :global(p),
+  .prose-solo :global(p) {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    font-weight: 300;
     margin-bottom: 1.25rem;
     color: var(--text-secondary);
   }
 
-  .prose :global(em) {
+  .prose :global(em),
+  .prose-solo :global(em) {
     color: var(--text-tertiary);
     font-style: italic;
   }
 
-  .prose :global(strong) {
+  .prose :global(strong),
+  .prose-solo :global(strong) {
     color: var(--text-primary);
     font-weight: 400;
   }
 
-  .prose :global(img) {
+  .prose :global(img),
+  .prose-solo :global(img) {
     width: 100%;
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
     margin: 1.5rem 0;
   }
 
-  .prose :global(video) {
+  .prose :global(video),
+  .prose-solo :global(video) {
     width: 100%;
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
     margin: 1.5rem 0;
   }
 
-  .prose :global(ul), .prose :global(ol) {
+  .prose :global(ul),
+  .prose :global(ol),
+  .prose-solo :global(ul),
+  .prose-solo :global(ol) {
     padding-left: 1.25rem;
     margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    font-weight: 300;
+    color: var(--text-secondary);
   }
 
-  .prose :global(li) {
+  .prose :global(li),
+  .prose-solo :global(li) {
     margin-bottom: 0.35rem;
     color: var(--text-secondary);
   }
 
-  .prose :global(code) {
+  .prose :global(code),
+  .prose-solo :global(code) {
     font-family: var(--font-mono);
     font-size: 0.82em;
     background: var(--bg-card);
@@ -223,15 +322,12 @@ function pillClass(discipline: string): string {
     border: 1px solid var(--border);
   }
 
-  .prose :global(blockquote) {
+  .prose :global(blockquote),
+  .prose-solo :global(blockquote) {
     border-left: 2px solid var(--border-hover);
     padding-left: 1.25rem;
     margin: 1.5rem 0;
     color: var(--text-tertiary);
     font-style: italic;
-  }
-
-  @media (max-width: 600px) {
-    .meta-blocks { grid-template-columns: 1fr; }
   }
 </style>

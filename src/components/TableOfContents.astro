@@ -1,0 +1,118 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<nav class="toc" aria-label="Table of contents">
+  <a href={`${base}/`} class="toc-back">← Back to project list</a>
+
+  {headings.length > 0 && (
+    <ul class="toc-list">
+      {headings.map(h => (
+        <li class={`toc-item toc-depth-${h.depth}`}>
+          <a href={`#${h.slug}`} class="toc-link" data-heading-link>
+            {h.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
+</nav>
+
+<script>
+  const headings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6'));
+  const tocLinks = document.querySelectorAll('[data-heading-link]');
+
+  // Narrow horizontal band near the top of the viewport acts as the "reading line"
+  const observer = new IntersectionObserver((entries) => {
+    let activeId: string | null = null;
+
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        activeId = entry.target.id;
+      }
+    });
+
+    if (activeId) {
+      tocLinks.forEach(link => link.classList.remove('active'));
+      const activeLink = document.querySelector(`[data-heading-link][href="#${activeId}"]`);
+      if (activeLink) activeLink.classList.add('active');
+    }
+  }, {
+    root: null,
+    rootMargin: '-100px 0px -80% 0px',
+    threshold: 0,
+  });
+
+  headings.forEach(h => observer.observe(h));
+</script>
+
+<style>
+  .toc {
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .toc-back {
+    display: block;
+    color: var(--text-tertiary);
+    letter-spacing: 0.02em;
+    margin-bottom: 1.5rem;
+    transition: color var(--transition);
+    font-size: 0.75rem;
+  }
+
+  .toc-back:hover {
+    color: var(--text-primary);
+  }
+
+  .toc-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .toc-link {
+    display: block;
+    color: var(--text-tertiary);
+    transition: color var(--transition);
+    padding: 0.15rem 0;
+    line-height: 1.4;
+  }
+
+  .toc-link:hover {
+    color: var(--text-secondary);
+  }
+
+  .toc-link.active {
+    color: var(--text-primary);
+  }
+
+  /* Depth indentation */
+  .toc-depth-2 { padding-left: 0; }
+  .toc-depth-3 { padding-left: 0.75rem; }
+  .toc-depth-4 { padding-left: 1.5rem; }
+  .toc-depth-5 { padding-left: 2.25rem; }
+  .toc-depth-6 { padding-left: 3rem; }
+
+  /* Mobile: render as a styled card */
+  @media (max-width: 767px) {
+    .toc {
+      padding: 1.25rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+  }
+</style>

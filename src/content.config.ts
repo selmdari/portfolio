@@ -14,6 +14,7 @@ const projects = defineCollection({
     tools: z.array(z.string()).optional().default([]),
     featured: z.boolean().optional().default(false),
     splat: z.string().optional(),
+    showToc: z.boolean().optional().default(true),
   }),
 });
 
