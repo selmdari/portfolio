@@ -115,11 +115,30 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
         // ── Tooltip marker projection ──────────────────────────────────────
         const markerEls = [...wrap.querySelectorAll<HTMLElement>('.splat-marker')];
         if (markerEls.length) {
-          const { Vector3 } = await import('three');
           const markerData = markerEls.map(el => ({
             el,
             pos: JSON.parse(el.dataset.position!) as [number, number, number],
           }));
+
+          // Project a world-space point to screen coords using the camera's
+          // matrices directly — no separate Three.js import needed.
+          function projectPoint(x: number, y: number, z: number, camera: any, W: number, H: number) {
+            const me = camera.matrixWorldInverse.elements;
+            const vx = me[0]*x + me[4]*y + me[8]*z  + me[12];
+            const vy = me[1]*x + me[5]*y + me[9]*z  + me[13];
+            const vz = me[2]*x + me[6]*y + me[10]*z + me[14];
+            const vw = me[3]*x + me[7]*y + me[11]*z + me[15];
+            const pe = camera.projectionMatrix.elements;
+            const cx = pe[0]*vx + pe[4]*vy + pe[8]*vz  + pe[12]*vw;
+            const cy = pe[1]*vx + pe[5]*vy + pe[9]*vz  + pe[13]*vw;
+            const cz = pe[2]*vx + pe[6]*vy + pe[10]*vz + pe[14]*vw;
+            const cw = pe[3]*vx + pe[7]*vy + pe[11]*vz + pe[15]*vw;
+            return {
+              sx: (cx/cw + 1) / 2 * W,
+              sy: (1 - cy/cw) / 2 * H,
+              behind: (cz/cw) > 1,
+            };
+          }
 
           function projectMarkers() {
             const camera = (viewer as any).camera;
@@ -129,14 +148,12 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
             const H = mount.clientHeight;
 
             for (const { el, pos } of markerData) {
-              const v = new Vector3(...pos).project(camera);
-              if (v.z > 1) {
+              const { sx, sy, behind } = projectPoint(pos[0], pos[1] + modelY, pos[2], camera, W, H);
+              if (behind) {
                 el.style.display = 'none';
               } else {
-                const x = (v.x + 1) / 2 * W;
-                const y = -(v.y - 1) / 2 * H;
                 el.style.display = '';
-                el.style.transform = `translate(${x - 10}px, ${y - 10}px)`;
+                el.style.transform = `translate(${sx - 10}px, ${sy - 10}px)`;
               }
             }
             requestAnimationFrame(projectMarkers);
