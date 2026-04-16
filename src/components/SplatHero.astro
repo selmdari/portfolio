@@ -112,8 +112,9 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
         viewer.start();
 
-        // ── Tooltip marker projection ──────────────────────────────────────
-        const markerEls = [...wrap.querySelectorAll<HTMLElement>('.splat-marker')];
+        // ── Tooltip marker projection (desktop/hover-capable devices only) ──
+        const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        const markerEls = canHover ? [...wrap.querySelectorAll<HTMLElement>('.splat-marker')] : [];
         if (markerEls.length) {
           const markerData = markerEls.map(el => ({
             el,
