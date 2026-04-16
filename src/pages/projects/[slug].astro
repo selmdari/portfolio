@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content, headings } = await render(project);
-const { title, summary, thumbnail, date, disciplines, splat, showToc } = project.data;
+const { title, summary, thumbnail, date, disciplines, splat, showToc, splatAnnotations, splatCameraPosition, splatMinDistance, splatMaxDistance, splatModelY, splatOrbitAngle } = project.data;
 
 function pillClass(discipline: string): string {
   const key = discipline.toLowerCase().replace(/\s+/g, '-');
@@ -50,7 +50,7 @@ function pillClass(discipline: string): string {
 
       <div class="hero-image">
         {splat
-          ? <SplatHero splat={splat} title={title} />
+          ? <SplatHero splat={splat} title={title} annotations={splatAnnotations} cameraPosition={splatCameraPosition} minDistance={splatMinDistance} maxDistance={splatMaxDistance} modelY={splatModelY} orbitAngle={splatOrbitAngle} />
           : <img src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${thumbnail.replace(/^\//, '')}`} alt={title} />
         }
       </div>

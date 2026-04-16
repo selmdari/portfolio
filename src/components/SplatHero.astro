@@ -2,16 +2,35 @@
 interface Props {
   splat: string;
   title: string;
+  annotations?: { position: [number, number, number]; label: string }[];
+  cameraPosition?: [number, number, number];
+  minDistance?: number;
+  maxDistance?: number;
+  modelY?: number;
+  orbitAngle?: number;
 }
-const { splat } = Astro.props;
+const { splat, annotations = [], cameraPosition = [0, 7, 10], minDistance = 0, maxDistance = 25, modelY = 0, orbitAngle = 0 } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 ---
 
-<div class="splat-wrap" data-splat-url={splatUrl}>
+<div class="splat-wrap" data-splat-url={splatUrl} data-camera-position={JSON.stringify(cameraPosition)} data-min-distance={minDistance} data-max-distance={maxDistance} data-model-y={modelY} data-orbit-angle={orbitAngle}>
   <div class="splat-mount"></div>
   <div class="splat-status">Loading 3D scan…</div>
   <div class="splat-hint" hidden>Drag to rotate · Scroll to zoom</div>
+  <div class="splat-overlay">
+    {annotations.map((ann, i) => (
+      <div
+        class="splat-marker"
+        data-index={i}
+        data-position={JSON.stringify(ann.position)}
+        style="display:none"
+      >
+        <div class="splat-marker-dot"></div>
+        <div class="splat-marker-label">{ann.label}</div>
+      </div>
+    ))}
+  </div>
 </div>
 
 <script>
@@ -20,6 +39,21 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
     const mount  = wrap.querySelector<HTMLElement>('.splat-mount')!;
     const status = wrap.querySelector<HTMLElement>('.splat-status')!;
     const hint   = wrap.querySelector<HTMLElement>('.splat-hint')!;
+
+    const cameraPosition: [number, number, number] = JSON.parse(wrap.dataset.cameraPosition || '[0,7,10]');
+    const minDistance: number = parseFloat(wrap.dataset.minDistance || '0');
+    const maxDistance: number = parseFloat(wrap.dataset.maxDistance || '25');
+    const modelY: number = parseFloat(wrap.dataset.modelY || '0');
+    const orbitAngle: number = parseFloat(wrap.dataset.orbitAngle || '0');
+
+    // Rotate the initial camera position around the Y-axis by orbitAngle degrees
+    const θ = orbitAngle * Math.PI / 180;
+    const [cx, cy, cz] = cameraPosition;
+    const initialCamera: [number, number, number] = [
+      cx * Math.cos(θ) + cz * Math.sin(θ),
+      cy,
+      -cx * Math.sin(θ) + cz * Math.cos(θ),
+    ];
 
     (async () => {
       try {
@@ -36,19 +70,20 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
         await new Promise<void>(r => requestAnimationFrame(() => r()));
 
         const w = mount.clientWidth;
-        mount.style.height = `${w}px`;
+        mount.style.height = `${Math.round(w * 3 / 4)}px`;
 
         const viewer = new Viewer({
           selfDrivenMode: true,
           sharedMemoryForWorkers: false,
           gpuAcceleratedSort: false,
           rootElement: mount,
-          initialCameraPosition: [0, 7, 10],
+          initialCameraPosition: initialCamera,
         });
 
         await viewer.addSplatScene(blobUrl, {
           splatAlphaRemovalThreshold: 1,
           showLoadingUI: false,
+          position: [0, modelY, 0],
           rotation: [0, 0, 1, 0],
           format: SceneFormat.Splat,
         });
@@ -60,8 +95,11 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
         const controls = (viewer as any).controls;
         if (controls) {
-          // No viewing from below the model
-          controls.maxPolarAngle = Math.PI / 2;
+          // Orbit: top view down to 50° from vertical
+          controls.maxPolarAngle = 75 * Math.PI / 180;
+          // Zoom: clamp how close and how far the user can go
+          controls.minDistance = minDistance;
+          controls.maxDistance = maxDistance;
 
           // Slow auto-orbit; stops the moment the user grabs the scene
           controls.autoRotate = true;
@@ -73,6 +111,44 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
         }
 
         viewer.start();
+
+        // ── Tooltip marker projection ──────────────────────────────────────
+        const markerEls = [...wrap.querySelectorAll<HTMLElement>('.splat-marker')];
+        if (markerEls.length) {
+          const { Vector3 } = await import('three');
+          const markerData = markerEls.map(el => ({
+            el,
+            pos: JSON.parse(el.dataset.position!) as [number, number, number],
+          }));
+
+          function projectMarkers() {
+            const camera = (viewer as any).camera;
+            if (!camera) { requestAnimationFrame(projectMarkers); return; }
+
+            const W = mount.clientWidth;
+            const H = mount.clientHeight;
+
+            for (const { el, pos } of markerData) {
+              const v = new Vector3(...pos).project(camera);
+              if (v.z > 1) {
+                el.style.display = 'none';
+              } else {
+                const x = (v.x + 1) / 2 * W;
+                const y = -(v.y - 1) / 2 * H;
+                el.style.display = '';
+                el.style.transform = `translate(${x - 10}px, ${y - 10}px)`;
+              }
+            }
+            requestAnimationFrame(projectMarkers);
+          }
+          projectMarkers();
+        }
+
+        // Signal to dev-splat-tool if present
+        mount.dispatchEvent(new CustomEvent('splat:ready', {
+          detail: { viewer },
+          bubbles: true,
+        }));
 
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -113,7 +189,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
   .splat-hint {
     position: absolute;
-    bottom: 1rem;
+    top: 1rem;
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.7rem;
@@ -127,5 +203,67 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
   .splat-hint[hidden] {
     display: none;
+  }
+
+  /* ── Tooltip markers ─────────────────────────────────────────────────── */
+  .splat-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .splat-marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: auto;
+  }
+
+  .splat-marker-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(232, 224, 208, 0.12);
+    border: 1.5px solid rgba(232, 224, 208, 0.75);
+    animation: splat-pulse 2.5s ease-in-out infinite;
+    cursor: default;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .splat-marker:hover .splat-marker-dot {
+    transform: scale(1.8);
+    background: rgba(232, 224, 208, 0.28);
+    border-color: rgba(232, 224, 208, 1);
+    animation-play-state: paused;
+  }
+
+  .splat-marker-label {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(14, 14, 14, 0.92);
+    border: 1px solid var(--border-hover);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+
+  .splat-marker:hover .splat-marker-label {
+    opacity: 1;
+  }
+
+  @keyframes splat-pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(232, 224, 208, 0.5); }
+    60%  { box-shadow: 0 0 0 9px rgba(232, 224, 208, 0);   }
+    100% { box-shadow: 0 0 0 0   rgba(232, 224, 208, 0);   }
   }
 </style>
