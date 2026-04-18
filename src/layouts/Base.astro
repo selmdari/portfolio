@@ -8,7 +8,7 @@ export interface Props {
 
 const {
   title = 'Soufiane El Mdari',
-  description = 'Engineering portfolio — Hardware, Electronics & Robotics',
+  description = 'Engineering Portfolio',
 } = Astro.props;
 ---
 
@@ -26,7 +26,6 @@ const {
     <header>
       <nav>
         <a href={import.meta.env.BASE_URL} class="nav-name">Soufiane El Mdari</a>
-        <span class="nav-descriptor">Hardware · Electronics · Robotics</span>
       </nav>
     </header>
 
@@ -62,7 +61,7 @@ const {
   }
 
   .nav-name {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     font-weight: 400;
     letter-spacing: 0.01em;
     color: var(--text-primary);

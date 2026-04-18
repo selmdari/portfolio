@@ -7,21 +7,21 @@
   --border: rgba(255,255,255,0.07);
   --border-hover: rgba(255,255,255,0.14);
   --text-primary: #f0ede8;
-  --text-secondary: rgba(240,237,232,0.45);
-  --text-tertiary: rgba(240,237,232,0.25);
+  --text-secondary: rgba(240, 237, 232, 0.658);
+  --text-tertiary: rgba(240, 237, 232, 0.719);
   --accent: #e8e0d0;
 
-  --pill-hardware:    #1a2e1a; --pill-hardware-text:    #6db86d;
-  --pill-electronics: #1a1a2e; --pill-electronics-text: #6d6db8;
+  --pill-hardware:    #2e1a1a; --pill-hardware-text:    #b86d6d;
+  --pill-electronics: #2e1a1a; --pill-electronics-text: #b86d6d;
   --pill-firmware:    #2e1a1a; --pill-firmware-text:    #b86d6d;
-  --pill-robotics:    #1a2a2e; --pill-robotics-text:    #5aaab8;
-  --pill-design:      #2a1a2e; --pill-design-text:      #a06db8;
-  --pill-fea:         #2e2a1a; --pill-fea-text:         #b8a05a;
-  --pill-structural:  #2e2a1a; --pill-structural-text:  #b8a05a;
-  --pill-civil:       #1a2e28; --pill-civil-text:       #5ab8a0;
-  --pill-mechanical:  #2e1e1a; --pill-mechanical-text:  #b8825a;
-  --pill-software:    #1e1a2e; --pill-software-text:    #7a6db8;
-  --pill-default:     #1e1e1e; --pill-default-text:     #888;
+  --pill-robotics:    #2e1a1a; --pill-robotics-text:    #b86d6d;
+  --pill-design:      #2e1a1a; --pill-design-text:      #b86d6d;
+  --pill-fea:         #2e1a1a; --pill-fea-text:         #b86d6d;
+  --pill-structural:  #2e1a1a; --pill-structural-text:  #b86d6d;
+  --pill-civil:       #2e1a1a; --pill-civil-text:       #b86d6d;
+  --pill-mechanical:  #2e1a1a; --pill-mechanical-text:  #b86d6d;
+  --pill-software:    #2e1a1a; --pill-software-text:    #b86d6d;
+  --pill-default:     #2e1a1a; --pill-default-text:     #b86d6d;
 
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;

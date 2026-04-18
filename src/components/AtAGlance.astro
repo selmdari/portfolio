@@ -1,7 +1,7 @@
 ---
 ---
 <div class="at-a-glance">
-  <span class="label">At a glance</span>
+  <span class="label">TLDR</span>
   <div class="content">
     <slot />
   </div>
@@ -18,17 +18,18 @@
 
   .label {
     display: block;
-    font-size: 0.78rem;
+    font-size: 1.6rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(240, 237, 232, 0.28);
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.5rem;
     font-family: var(--font-mono);
+    font-weight: bold;
   }
 
   .content :global(p) {
-    font-size: 1.0rem;
-    line-height: 1.85;
+    font-size: 1.2rem;
+    line-height: 1.6;
     color: rgba(240, 237, 232, 0.6);
     margin: 0;
     font-weight: 300;

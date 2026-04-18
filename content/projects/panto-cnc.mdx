@@ -50,6 +50,8 @@ Hardware, firmware, and electronics were built from scratch. No-load positional 
 
 </AtAGlance>
 
+---
+
 ## Restoration
 
 I bought this because pantograph mechanisms are genuinely interesting to me; I wanted to work on one hands-on. A proper rigid CNC is a future project.
@@ -73,7 +75,7 @@ Consistent with pantograph behavior. Within tolerance for aluminum, brass, and h
 
 ---
 
-## Conversion
+## CNC Conversion
 
 The deflection measurements put a number on what hand-feed had already shown: full-width passes produced chatter the linkage can't absorb. High-speed shallow cuts at consistent feed were the only repeatable strategy, and that can't be executed by hand. That's what the CNC conversion needed to deliver.
 
@@ -97,6 +99,7 @@ Aluminum (6061): 18k RPM, 800 mm/min, 4mm DOC, 10% WOC, trochoidal toolpath.
 A 3 N·m closed-loop NEMA 23 couples to the handwheel shaft via a custom HTD 3M pulley and sliding belt tensioner, with no modification to the original casting. Stall or torque overrun alarms grblHAL and triggers emergency stop. On an axis lifting ~35 kg, that was a reasonable safety measure, hence the closed loop stepper.
 
 ![Z axis motor assembly](/images/projects/panto-cnc/z-axis.jpg)
+
 ---
 
 ## Electronics
@@ -120,6 +123,6 @@ Commanded repeatability: ±10 microns on all three axes after backlash compensat
 
 First output: 6061-T6 aluminum moving base for a robotic platform, 120×80×6mm, 1/4in end mill, face milling, contour milling, circular pocketing, drilling. The part is a modular fixture base with an M3 threaded hole pattern for attaching different modules. XY position tolerance (±0.05 mm) is the critical dimension — within spec. Z depth (±0.10 mm) isn't a mating surface for this application.
 
-This project was my introduction to proper electrical cabinet design: AC/DC separation, signal integrity, EMI, and that turned out to be the most satisfying part. 10/10 would do it again.
-
 ![Machined part in progress: contour and pocket operations](/images/projects/panto-cnc/robot-platform.jpg)
+
+This project was my introduction to proper electrical cabinet design: AC/DC separation, signal integrity, EMI, and that turned out to be the most satisfying part. 10/10 would do it again.
