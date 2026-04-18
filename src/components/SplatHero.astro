@@ -113,6 +113,11 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
         viewer.start();
 
+        if (window.innerWidth <= 768) {
+          const renderer = (viewer as any).renderer;
+          if (renderer?.setPixelRatio) renderer.setPixelRatio(1);
+        }
+
         // ── Tooltip marker projection (desktop/hover-capable devices only) ──
         const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         const markerEls = canHover ? [...wrap.querySelectorAll<HTMLElement>('.splat-marker')] : [];
