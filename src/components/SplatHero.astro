@@ -18,6 +18,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
   <div class="splat-mount"></div>
   <div class="splat-status">Loading 3D scan…</div>
   <div class="splat-hint" hidden>Drag to rotate · Scroll to zoom</div>
+  <button class="splat-resume" hidden>↺ Resume 3D</button>
   <div class="splat-overlay">
     {annotations.map((ann, i) => (
       <div
@@ -113,9 +114,24 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
         viewer.start();
 
+        // ── Mobile: pause render loop when scrolled away, resume on tap ──
         if (window.innerWidth <= 768) {
-          const renderer = (viewer as any).renderer;
-          if (renderer?.setPixelRatio) renderer.setPixelRatio(1);
+          const resumeBtn = wrap.querySelector<HTMLElement>('.splat-resume');
+          let stopped = false;
+
+          new IntersectionObserver(entries => {
+            if (!entries[0].isIntersecting && !stopped) {
+              viewer.stop();
+              stopped = true;
+              resumeBtn!.hidden = false;
+            }
+          }, { threshold: 0.1 }).observe(wrap);
+
+          resumeBtn!.addEventListener('click', () => {
+            viewer.start();
+            stopped = false;
+            resumeBtn!.hidden = true;
+          });
         }
 
         // ── Tooltip marker projection (desktop/hover-capable devices only) ──
@@ -227,6 +243,23 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
 
   .splat-hint[hidden] {
     display: none;
+  }
+
+  .splat-resume {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(14, 14, 14, 0.85);
+    border: 1px solid var(--border-hover);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    padding: 8px 18px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
   }
 
   /* ── Tooltip markers ─────────────────────────────────────────────────── */
