@@ -70,7 +70,8 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
         await new Promise<void>(r => requestAnimationFrame(() => r()));
 
         const w = mount.clientWidth;
-        mount.style.height = `${Math.round(w * 3 / 4)}px`;
+        const ratio = window.innerWidth <= 768 ? 1 : 3 / 4;
+        mount.style.height = `${Math.round(w * ratio)}px`;
 
         const viewer = new Viewer({
           selfDrivenMode: true,
