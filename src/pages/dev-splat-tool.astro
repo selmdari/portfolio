@@ -1,0 +1,890 @@
+---
+// Secret developer tool for authoring splat tooltip annotations.
+// Not linked from any public page. Access directly: /dev-splat-tool
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const splatProjects = allProjects
+  .filter(p => p.data.splat)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title))
+  .map(p => ({
+    id: p.id,
+    title: p.data.title,
+    splatUrl: `${base}/${p.data.splat!.replace(/^\//, '')}`,
+    annotations: p.data.splatAnnotations ?? [],
+  }));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Splat Annotation Tool</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #0a0a0a;
+        color: #f0ede8;
+        font-family: 'DM Mono', 'Courier New', monospace;
+        font-size: 13px;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #viewer-wrap {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        background: #0a0a0a;
+      }
+
+      #viewer-mount {
+        width: 100%;
+        height: 100%;
+      }
+
+      #viewer-mount canvas { display: block; }
+
+      #viewer-status {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: rgba(240,237,232,0.25);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+
+      /* ── Marker overlay ──────────────────────────────────────────────── */
+      #marker-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .dev-marker {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+
+      .dev-marker-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
+
+      #preview-marker .dev-marker-dot {
+        background: rgba(245,197,24,0.15);
+        border: 1.5px solid rgba(245,197,24,0.85);
+        box-shadow: 0 0 0 4px rgba(245,197,24,0.15);
+      }
+
+      .dev-marker.saved .dev-marker-dot {
+        background: rgba(232,224,208,0.12);
+        border: 1.5px solid rgba(232,224,208,0.7);
+        box-shadow: 0 0 0 3px rgba(232,224,208,0.1);
+      }
+
+      .dev-marker-label {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(14,14,14,0.92);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: #f0ede8;
+        font-size: 0.72rem;
+        padding: 5px 10px;
+        border-radius: 4px;
+        white-space: nowrap;
+        letter-spacing: 0.02em;
+      }
+
+      /* ── Dev panel ───────────────────────────────────────────────────── */
+      #dev-panel {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 240px;
+        background: rgba(14,14,14,0.96);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        pointer-events: auto;
+        z-index: 10;
+      }
+
+      #dev-panel h2 {
+        font-size: 0.68rem;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+        color: rgba(240,237,232,0.35);
+        text-transform: uppercase;
+      }
+
+      /* Project selector */
+      #splat-select {
+        width: 100%;
+        min-width: 0;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 4px;
+        color: #f0ede8;
+        font-family: inherit;
+        font-size: 0.72rem;
+        padding: 5px 8px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      #splat-select option { background: #111; }
+
+      hr {
+        border: none;
+        border-top: 1px solid rgba(255,255,255,0.07);
+      }
+
+      /* Markers list */
+      #markers-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      #markers-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      #markers-header span {
+        font-size: 0.65rem;
+        color: rgba(240,237,232,0.35);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      #btn-add {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 3px;
+        color: rgba(240,237,232,0.6);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      #btn-add:hover { background: rgba(255,255,255,0.12); color: #f0ede8; }
+      #btn-add:disabled { opacity: 0.3; cursor: default; }
+
+      #marker-list {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        max-height: 130px;
+        overflow-y: auto;
+      }
+
+      .marker-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 3px;
+        padding: 4px 6px;
+      }
+
+      .marker-item.editing-active {
+        background: rgba(245,197,24,0.08);
+        border: 1px solid rgba(245,197,24,0.2);
+      }
+
+      .marker-item .marker-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.65rem;
+        color: rgba(240,237,232,0.7);
+      }
+
+      .marker-item button {
+        flex: none;
+        background: none;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 3px;
+        color: rgba(240,237,232,0.35);
+        font-family: inherit;
+        font-size: 0.6rem;
+        padding: 1px 5px;
+        cursor: pointer;
+        line-height: 1.4;
+      }
+
+      .marker-item button:hover { color: #f0ede8; border-color: rgba(255,255,255,0.25); }
+
+      #markers-empty {
+        font-size: 0.65rem;
+        color: rgba(240,237,232,0.2);
+        text-align: center;
+        padding: 6px 0;
+      }
+
+      /* ── Add / Edit form ─────────────────────────────────────────────── */
+      #edit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-top: 0.1rem;
+      }
+
+      #edit-form.hidden { display: none; }
+
+      #edit-form-title {
+        font-size: 0.65rem;
+        color: rgba(245,197,24,0.7);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .field label {
+        display: block;
+        font-size: 0.63rem;
+        color: rgba(240,237,232,0.4);
+        margin-bottom: 3px;
+        letter-spacing: 0.04em;
+      }
+
+      .field input[type="text"] {
+        width: 100%;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 4px;
+        color: #f0ede8;
+        font-family: inherit;
+        font-size: 0.75rem;
+        padding: 5px 8px;
+        outline: none;
+      }
+
+      .field input[type="text"]:focus { border-color: rgba(255,255,255,0.25); }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .slider-row .axis {
+        width: 12px;
+        font-size: 0.63rem;
+        color: rgba(240,237,232,0.35);
+        flex-shrink: 0;
+      }
+
+      .slider-row input[type="range"] {
+        flex: 1;
+        min-width: 0;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 20px;
+        background: transparent;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .slider-row input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        background: rgba(255,255,255,0.12);
+        border-radius: 2px;
+      }
+
+      .slider-row input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #f5c518;
+        border: 2px solid rgba(245,197,24,0.4);
+        margin-top: -6px;
+        cursor: grab;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      .slider-row input[type="range"]::-webkit-slider-thumb:active {
+        cursor: grabbing;
+        transform: scale(1.2);
+        box-shadow: 0 0 0 4px rgba(245,197,24,0.2);
+      }
+
+      .slider-row input[type="range"]::-moz-range-track {
+        height: 4px;
+        background: rgba(255,255,255,0.12);
+        border-radius: 2px;
+      }
+
+      .slider-row input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #f5c518;
+        border: 2px solid rgba(245,197,24,0.4);
+        cursor: grab;
+      }
+
+      .slider-row .val {
+        width: 54px;
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 4px;
+        color: rgba(240,237,232,0.8);
+        font-family: inherit;
+        font-size: 0.68rem;
+        padding: 3px 5px;
+        text-align: right;
+        outline: none;
+        -moz-appearance: textfield;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .slider-row .val:focus {
+        border-color: rgba(245,197,24,0.5);
+        color: #f0ede8;
+      }
+
+      .slider-row .val::-webkit-inner-spin-button,
+      .slider-row .val::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 5px;
+        margin-top: 0.1rem;
+      }
+
+      .btn-row button {
+        flex: 1;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 4px;
+        color: #f0ede8;
+        font-family: inherit;
+        font-size: 0.7rem;
+        padding: 6px 0;
+        cursor: pointer;
+      }
+
+      .btn-row button:hover { background: rgba(255,255,255,0.13); }
+
+      #btn-apply {
+        background: rgba(245,197,24,0.12) !important;
+        border-color: rgba(245,197,24,0.25) !important;
+        color: #f5c518 !important;
+      }
+
+      #btn-apply:hover { background: rgba(245,197,24,0.22) !important; }
+
+      /* ── Save section ────────────────────────────────────────────────── */
+      #save-section {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      #btn-save-file {
+        width: 100%;
+        background: rgba(232,224,208,0.1);
+        border: 1px solid rgba(232,224,208,0.2);
+        border-radius: 4px;
+        color: #e8e0d0;
+        font-family: inherit;
+        font-size: 0.72rem;
+        padding: 7px 0;
+        cursor: pointer;
+      }
+
+      #btn-save-file:hover { background: rgba(232,224,208,0.18); }
+      #btn-save-file:disabled { opacity: 0.35; cursor: default; }
+
+      #save-status {
+        font-size: 0.63rem;
+        text-align: center;
+        color: rgba(240,237,232,0.35);
+        min-height: 1em;
+        letter-spacing: 0.02em;
+      }
+
+      #save-status.ok  { color: #7fcf8a; }
+      #save-status.err { color: #e07070; }
+    </style>
+  </head>
+  <body>
+    <div id="viewer-wrap">
+      <div id="viewer-mount"></div>
+      <div id="viewer-status">Pick a project to load its 3D scan</div>
+
+      <div id="marker-overlay">
+        <div id="preview-marker" class="dev-marker" style="display:none">
+          <div class="dev-marker-dot"></div>
+        </div>
+      </div>
+
+      <div id="dev-panel">
+        <h2>Splat Annotation Tool</h2>
+
+        <select id="splat-select">
+          <option value="">— pick a project —</option>
+          {splatProjects.map(p => (
+            <option value={p.id}>{p.title}</option>
+          ))}
+        </select>
+
+        <hr />
+
+        <div id="markers-section">
+          <div id="markers-header">
+            <span>Markers</span>
+            <button id="btn-add" disabled>+ Add</button>
+          </div>
+          <div id="marker-list">
+            <div id="markers-empty">No project loaded</div>
+          </div>
+        </div>
+
+        <div id="edit-form" class="hidden">
+          <hr />
+          <div id="edit-form-title">New Marker</div>
+          <div class="field">
+            <label>Label</label>
+            <input id="label-input" type="text" placeholder="e.g. Engine Block" />
+          </div>
+          <div class="slider-row">
+            <span class="axis">X</span>
+            <input id="slider-x" type="range" min="-15" max="15" step="0.01" value="0" />
+            <input type="number" class="val" id="val-x" value="0" step="0.01" />
+          </div>
+          <div class="slider-row">
+            <span class="axis">Y</span>
+            <input id="slider-y" type="range" min="-15" max="15" step="0.01" value="0" />
+            <input type="number" class="val" id="val-y" value="0" step="0.01" />
+          </div>
+          <div class="slider-row">
+            <span class="axis">Z</span>
+            <input id="slider-z" type="range" min="-15" max="15" step="0.01" value="0" />
+            <input type="number" class="val" id="val-z" value="0" step="0.01" />
+          </div>
+          <div class="btn-row">
+            <button id="btn-cancel">Cancel</button>
+            <button id="btn-apply">Apply</button>
+          </div>
+        </div>
+
+        <hr />
+
+        <div id="save-section">
+          <button id="btn-save-file" disabled>Save to File</button>
+          <div id="save-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inject build-time project data as a global so the Vite-bundled script below can access it -->
+    <script is:inline define:vars={{ splatProjects }}>
+      window.__splatProjects = splatProjects;
+    </script>
+
+    <!-- Regular script — processed by Vite so bare module specifiers resolve correctly -->
+    <script>
+      // ── State ────────────────────────────────────────────────────────────────
+      const splatProjects: { id: string; title: string; splatUrl: string; annotations: { label: string; position: [number,number,number] }[] }[] =
+        (window as any).__splatProjects;
+
+      let viewer: any = null;
+      let currentSlug = '';
+      let annotations = [];   // working copy for current project
+      let editingIndex = -1;  // -1 = adding new, >=0 = editing existing
+      let formOpen = false;
+      let loopRunning = false;
+      let activePos = [0, 0, 0];
+
+      // ── DOM refs ─────────────────────────────────────────────────────────────
+      const mount         = document.getElementById('viewer-mount');
+      const viewerStatus  = document.getElementById('viewer-status');
+      const overlay       = document.getElementById('marker-overlay');
+      const previewMarker = document.getElementById('preview-marker');
+      const splatSelect   = document.getElementById('splat-select');
+      const btnAdd        = document.getElementById('btn-add');
+      const markerList    = document.getElementById('marker-list');
+      const markersEmpty  = document.getElementById('markers-empty');
+      const editForm      = document.getElementById('edit-form');
+      const editFormTitle = document.getElementById('edit-form-title');
+      const labelInput    = document.getElementById('label-input');
+      const sliderX       = document.getElementById('slider-x');
+      const sliderY       = document.getElementById('slider-y');
+      const sliderZ       = document.getElementById('slider-z');
+      const valX          = document.getElementById('val-x');
+      const valY          = document.getElementById('val-y');
+      const valZ          = document.getElementById('val-z');
+      const btnCancel     = document.getElementById('btn-cancel');
+      const btnApply      = document.getElementById('btn-apply');
+      const btnSaveFile   = document.getElementById('btn-save-file');
+      const saveStatus    = document.getElementById('save-status');
+
+      // ── Project select → auto-load ────────────────────────────────────────
+      splatSelect.addEventListener('change', () => {
+        const id = splatSelect.value;
+        if (!id) return;
+        const proj = splatProjects.find(p => p.id === id);
+        if (!proj) return;
+
+        currentSlug = proj.id;
+        // Deep-copy existing annotations
+        annotations = proj.annotations.map(a => ({
+          label: a.label,
+          position: [...a.position],
+        }));
+
+        closeForm();
+        renderMarkerList();
+        loadSplat(proj.splatUrl);
+      });
+
+      // ── Load splat ────────────────────────────────────────────────────────
+      async function loadSplat(splatUrl) {
+        viewerStatus.textContent = 'Loading 3D scan…';
+        mount.style.height = mount.clientWidth + 'px';
+        btnAdd.disabled = true;
+        btnSaveFile.disabled = true;
+
+        try {
+          if (viewer) {
+            try { viewer.stop(); viewer.dispose(); } catch {}
+            viewer = null;
+          }
+          mount.innerHTML = '';
+
+          const { Viewer, SceneFormat } = await import('@mkkellogg/gaussian-splats-3d');
+
+          const fullUrl = new URL(splatUrl, window.location.origin).href;
+          const resp = await fetch(fullUrl);
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const blobUrl = URL.createObjectURL(await resp.blob());
+
+          viewer = new Viewer({
+            selfDrivenMode: true,
+            sharedMemoryForWorkers: false,
+            gpuAcceleratedSort: false,
+            rootElement: mount,
+            initialCameraPosition: [0, 7, 10],
+          });
+
+          await viewer.addSplatScene(blobUrl, {
+            splatAlphaRemovalThreshold: 1,
+            showLoadingUI: false,
+            rotation: [0, 0, 1, 0],
+            format: SceneFormat.Splat,
+          });
+
+          URL.revokeObjectURL(blobUrl);
+          viewerStatus.textContent = '';
+          viewer.start();
+
+          btnAdd.disabled = false;
+          btnSaveFile.disabled = false;
+
+          // Controls
+          const controls = viewer.controls;
+          if (controls) {
+            controls.maxPolarAngle = 50 * Math.PI / 180;
+            controls.maxDistance = 25;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.8;
+            mount.addEventListener('pointerdown', () => { controls.autoRotate = false; }, { once: true });
+          }
+
+          // Start projection loop (only one at a time)
+          if (!loopRunning) {
+            loopRunning = true;
+            requestAnimationFrame(projectionLoop);
+          }
+
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          viewerStatus.textContent = 'Failed to load: ' + msg;
+          console.error('[dev-splat-tool]', err);
+        }
+      }
+
+      // ── Projection loop ───────────────────────────────────────────────────
+      let Vector3Class = null;
+
+      async function ensureVector3() {
+        if (!Vector3Class) {
+          const three = await import('three');
+          Vector3Class = three.Vector3;
+        }
+        return Vector3Class;
+      }
+
+      async function projectionLoop() {
+        const Vector3 = await ensureVector3();
+
+        function tick() {
+          const camera = viewer && viewer.camera;
+          if (camera) {
+            const W = mount.clientWidth;
+            const H = mount.clientHeight;
+
+            function project(pos, el) {
+              const v = new Vector3(...pos).project(camera);
+              if (v.z > 1) {
+                el.style.display = 'none';
+              } else {
+                const x = (v.x + 1) / 2 * W;
+                const y = -(v.y - 1) / 2 * H;
+                el.style.display = '';
+                el.style.transform = 'translate(' + (x - 10) + 'px, ' + (y - 10) + 'px)';
+              }
+            }
+
+            // Preview marker (only when form is open)
+            if (formOpen) {
+              project(activePos, previewMarker);
+            }
+
+            // Saved markers
+            overlay.querySelectorAll('.dev-marker.saved').forEach(el => {
+              const pos = JSON.parse(el.dataset.position);
+              project(pos, el);
+            });
+          }
+
+          requestAnimationFrame(tick);
+        }
+
+        tick();
+      }
+
+      // ── Marker list rendering ─────────────────────────────────────────────
+      function renderMarkerList() {
+        // Remove all saved overlay markers and rebuild from annotations array
+        overlay.querySelectorAll('.dev-marker.saved').forEach(el => el.remove());
+
+        markerList.innerHTML = '';
+
+        if (!currentSlug) {
+          markersEmpty.textContent = 'No project loaded';
+          markerList.appendChild(markersEmpty);
+          return;
+        }
+
+        if (!annotations.length) {
+          markersEmpty.textContent = 'No markers yet — click + Add';
+          markerList.appendChild(markersEmpty);
+        }
+
+        annotations.forEach((ann, i) => {
+          // Overlay dot
+          const dot = document.createElement('div');
+          dot.className = 'dev-marker saved';
+          dot.dataset.position = JSON.stringify(ann.position);
+          dot.dataset.index = String(i);
+          dot.style.display = 'none';
+          dot.innerHTML = '<div class="dev-marker-dot"></div><div class="dev-marker-label">' + ann.label + '</div>';
+          overlay.appendChild(dot);
+
+          // List row
+          const row = document.createElement('div');
+          row.className = 'marker-item';
+          row.dataset.index = String(i);
+
+          const name = document.createElement('span');
+          name.className = 'marker-name';
+          name.title = ann.label;
+          name.textContent = ann.label;
+
+          const btnEdit = document.createElement('button');
+          btnEdit.textContent = '✎';
+          btnEdit.title = 'Edit';
+          btnEdit.addEventListener('click', () => openEditForm(i));
+
+          const btnDel = document.createElement('button');
+          btnDel.textContent = '✕';
+          btnDel.title = 'Delete';
+          btnDel.addEventListener('click', () => deleteMarker(i));
+
+          row.appendChild(name);
+          row.appendChild(btnEdit);
+          row.appendChild(btnDel);
+          markerList.appendChild(row);
+        });
+      }
+
+      // ── Form open / close ────────────────────────────────────────────────
+      function openAddForm() {
+        editingIndex = -1;
+        editFormTitle.textContent = 'New Marker';
+        labelInput.value = '';
+        sliderX.value = '0'; sliderY.value = '0'; sliderZ.value = '0';
+        updateFromSliders();
+        showForm();
+      }
+
+      function openEditForm(i) {
+        editingIndex = i;
+        const ann = annotations[i];
+        editFormTitle.textContent = 'Edit Marker';
+        labelInput.value = ann.label;
+        sliderX.value = String(ann.position[0]);
+        sliderY.value = String(ann.position[1]);
+        sliderZ.value = String(ann.position[2]);
+        updateFromSliders();
+        showForm();
+
+        // Highlight the active row
+        markerList.querySelectorAll('.marker-item').forEach((row, idx) => {
+          row.classList.toggle('editing-active', idx === i);
+        });
+      }
+
+      function showForm() {
+        formOpen = true;
+        editForm.classList.remove('hidden');
+        previewMarker.style.display = 'none'; // will be shown by projection loop
+        labelInput.focus();
+      }
+
+      function closeForm() {
+        formOpen = false;
+        editForm.classList.add('hidden');
+        previewMarker.style.display = 'none';
+        editingIndex = -1;
+        markerList.querySelectorAll('.marker-item').forEach(r => r.classList.remove('editing-active'));
+      }
+
+      btnAdd.addEventListener('click', () => {
+        if (!currentSlug) return;
+        openAddForm();
+      });
+
+      btnCancel.addEventListener('click', closeForm);
+
+      // Prevent the viewer's keyboard shortcuts from firing while typing in any
+      // panel input. Stop propagation at the panel level so it covers all inputs.
+      document.getElementById('dev-panel')!.addEventListener('keydown', e => e.stopPropagation());
+      document.getElementById('dev-panel')!.addEventListener('keyup',   e => e.stopPropagation());
+      document.getElementById('dev-panel')!.addEventListener('keypress', e => e.stopPropagation());
+
+      btnApply.addEventListener('click', () => {
+        const label = labelInput.value.trim() || ('Point ' + (annotations.length + 1));
+        const pos = [
+          parseFloat(sliderX.value),
+          parseFloat(sliderY.value),
+          parseFloat(sliderZ.value),
+        ];
+
+        if (editingIndex >= 0) {
+          annotations[editingIndex] = { label, position: pos };
+        } else {
+          annotations.push({ label, position: pos });
+        }
+
+        closeForm();
+        renderMarkerList();
+        clearSaveStatus();
+      });
+
+      // ── Slider / number input two-way sync ───────────────────────────────
+      function updateFromSliders() {
+        const x = parseFloat(sliderX.value);
+        const y = parseFloat(sliderY.value);
+        const z = parseFloat(sliderZ.value);
+        (valX as HTMLInputElement).value = x.toFixed(2);
+        (valY as HTMLInputElement).value = y.toFixed(2);
+        (valZ as HTMLInputElement).value = z.toFixed(2);
+        activePos = [x, y, z];
+      }
+
+      function updateFromInputs() {
+        const x = parseFloat((valX as HTMLInputElement).value) || 0;
+        const y = parseFloat((valY as HTMLInputElement).value) || 0;
+        const z = parseFloat((valZ as HTMLInputElement).value) || 0;
+        sliderX.value = String(Math.max(-15, Math.min(15, x)));
+        sliderY.value = String(Math.max(-15, Math.min(15, y)));
+        sliderZ.value = String(Math.max(-15, Math.min(15, z)));
+        activePos = [x, y, z];
+      }
+
+      sliderX.addEventListener('input', updateFromSliders);
+      sliderY.addEventListener('input', updateFromSliders);
+      sliderZ.addEventListener('input', updateFromSliders);
+      valX.addEventListener('input', updateFromInputs);
+      valY.addEventListener('input', updateFromInputs);
+      valZ.addEventListener('input', updateFromInputs);
+
+      // ── Delete marker ─────────────────────────────────────────────────────
+      function deleteMarker(i) {
+        if (editingIndex === i) closeForm();
+        annotations.splice(i, 1);
+        renderMarkerList();
+        clearSaveStatus();
+      }
+
+      // ── Save to file ──────────────────────────────────────────────────────
+      btnSaveFile.addEventListener('click', async () => {
+        if (!currentSlug) return;
+        btnSaveFile.disabled = true;
+        setSaveStatus('Saving…', '');
+
+        try {
+          const resp = await fetch('/dev-api/annotations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: currentSlug, annotations }),
+          });
+          const data = await resp.json();
+          if (data.ok) {
+            setSaveStatus('Saved ✓', 'ok');
+            // Update the in-memory project data so reloading the same project
+            // reflects the saved state without a page refresh
+            const proj = splatProjects.find(p => p.id === currentSlug);
+            if (proj) proj.annotations = annotations.map(a => ({ label: a.label, position: [...a.position] }));
+          } else {
+            setSaveStatus('Error: ' + data.error, 'err');
+          }
+        } catch (err) {
+          setSaveStatus('Network error', 'err');
+          console.error('[dev-splat-tool] save error', err);
+        }
+
+        btnSaveFile.disabled = false;
+      });
+
+      function setSaveStatus(msg, cls) {
+        saveStatus.textContent = msg;
+        saveStatus.className = cls;
+      }
+
+      function clearSaveStatus() {
+        saveStatus.textContent = '';
+        saveStatus.className = '';
+      }
+    </script>
+
+  </body>
+</html>
