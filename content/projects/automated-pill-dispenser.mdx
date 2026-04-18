@@ -1,6 +1,6 @@
 ---
 title: Automated Pill Dispenser Prototype
-summary: Built to help my grandma take two different pills at two different times each day, and give me a way to track that she actually did. Uses curving magazine geometry to prevent capsule jams, a single motor serving two independent magazines through motion sequencing, and a light sensor to confirm dispensing and pickup.
+summary: Built to help my grandmother take two different pills at two different times each day, and give me a way to track that she actually did. Uses curving magazine geometry to prevent capsule jams, a single motor serving two independent magazines through motion sequencing, and a light sensor to confirm dispensing and pickup.
 thumbnail: /images/projects/automated-pill-dispenser/thumbnail.jpg
 date: 2025-04
 disciplines:
@@ -37,17 +37,18 @@ import AtAGlance from '../../src/components/AtAGlance.astro';
 
 <AtAGlance>
 
-A desk-sized pill dispenser built for my grandma — two pills, two schedules, fully automated. The goal was simple: make sure she takes her medication every day without relying on memory, and give me a way to remotely confirm she actually did. It runs on a fixed daily schedule, dispenses each pill at the right time, and logs every pickup to Home Assistant over MQTT. Deployed at her home and running since April 2025. The main engineering challenge was dispensing reliably with zero tolerance for jams or missed doses: a curving sinusoidal magazine channel physically prevents capsule tilt, one closed-loop DC motor serves both magazines through motion sequencing, and an ambient light sensor confirms dispensing and pickup via differential detection.
+A desk-sized pill dispenser I built for my grandmother. Two pills, two schedules, fully automated. The goal: she takes her meds every day without relying on memory, and I can confirm remotely that she did. It runs on a fixed daily schedule, dispenses each pill at its scheduled time, and logs every pickup to Home Assistant over MQTT. Deployed at her home and running since April 2025.
+The hard part was dispensing reliably with zero tolerance for jams or missed doses. A curving sinusoidal magazine channel physically prevents capsules from tilting. One closed-loop DC motor drives both magazines through motion sequencing. An ambient light sensor confirms dispensing and pickup through differential detection.
 
 </AtAGlance>
 
 ## Motivation
 
-My grandma takes a daily pill on a fixed schedule. The goal was a dispenser that would dose reliably, alert her when it was time, and give the family remote confirmation that the pill was actually taken — something small enough to sit on her bedside table without being intrusive.
+My grandmother takes a daily pill on a fixed schedule. The goal was a dispenser that would dose reliably, alert her when it was time, and give the family remote confirmation that the pill was actually taken — something small enough to sit on her bedside table without being intrusive.
 
 Manual pill boxes require weekly refilling and provide no confirmation. Automated dispensers at the high end target institutional, high-volume environments and are priced accordingly. Nothing existed at the point on that spectrum that made sense for a single elderly user at home.
 
-The constraint that shaped every downstream decision: any failure rate above zero is a system failure. A missed dose for my grandma is not a degraded outcome — it's a health risk.
+The constraint that shaped every downstream decision: any failure rate above zero is a system failure. A missed dose for my grandmother is not a degraded outcome — it's a health risk.
 
 ## Mechanical system
 
@@ -86,13 +87,13 @@ A geared DC motor drives the dispensing cylinder through a custom spur gear size
 
 The motion profile is trapezoidal with controlled acceleration and deceleration to reduce mechanical noise. Full PID was evaluated and rejected: at low speed with low disturbance loads, open-loop motion profiling with encoder confirmation is sufficient.
 
-On startup the system moves to a known home reference. Dispense cycles are triggered by MQTT commands from Home Assistant on a schedule matched to my grandma's medication routine.
+On startup the system moves to a known home reference. Dispense cycles are triggered by MQTT commands from Home Assistant on a schedule matched to my grandmother's medication routine.
 
 ## System states and verification
 
 ![System state diagram: Idle, Dispense Triggered, Cylinder Moving, Awaiting Occlusion, Pill Detected, Awaiting Pickup, Confirmed, Error, with transitions annotated with trigger conditions and timeout logic](/images/projects/automated-pill-dispenser/system-state-diagram.svg)
 
-Before each cycle, the sensor samples a baseline ambient light reading. When the dispensed pill drops, it occludes the sensor. The differential confirms the pill left the magazine. A flashing LED signals to my grandma that the pill is ready. When she picks it up, the sensor returns to baseline, the indicator clears, and the pickup event logs to Home Assistant — giving the family a timestamped confirmation remotely.
+Before each cycle, the sensor samples a baseline ambient light reading. When the dispensed pill drops, it occludes the sensor. The differential confirms the pill left the magazine. A flashing LED signals to my grandmother that the pill is ready. When she picks it up, the sensor returns to baseline, the indicator clears, and the pickup event logs to Home Assistant — giving the family a timestamped confirmation remotely.
 
 If no occlusion is detected after a completed dispense cycle, the system logs an error. The failure mode is visible and recorded, and the family can be notified via Home Assistant automation.
 
@@ -108,6 +109,6 @@ The board has known weaknesses. Ground management uses a stitched fill with manu
 
 ![Automated Pill Dispenser](/images/projects/automated-pill-dispenser/thumbnail.jpg)
 
-The system has run autonomously at my grandma's home on a daily schedule since April 2025 with zero missed doses. Pill count at each refill has matched the expected count every cycle, confirming consistent mechanical and sensing performance over sustained use.
+The system has run autonomously at my grandmother's home on a daily schedule since April 2025 with zero missed doses. Pill count at each refill has matched the expected count every cycle, confirming consistent mechanical and sensing performance over sustained use.
 
 **Scope boundary:** Designed and deployed for a single elderly user in a home environment. Sensing logic handles the intended operating conditions reliably. Ambient light variation across environments, alternate capsule geometries, and multi-user operation are not addressed and would require further development.
