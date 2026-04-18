@@ -82,6 +82,8 @@ Linkage ratio set to 2:1, the largest ratio that fits the physical envelope of t
 
 ### XY Gantry
 
+![XY gantry: motor mounts, belt tensioners, carriage](/images/projects/panto-cnc/gantry-assembly.jpg)
+
 - Cartesian, 2020/2040 extrusion, linear rails on all axes
 - Custom-designed and 3D printed motor mounts, brackets, carriage parts
 - Belt drive throughout; lead screws rejected: too slow for HSM feed rates, and they would likely transmit vibration directly into the linkage
@@ -91,13 +93,11 @@ Motors: LDO 42STH48-2804AH (0.59 N·m holding torque). GT2 20T pulleys give 185N
 
 Aluminum (6061): 18k RPM, 800 mm/min, 4mm DOC, 10% WOC, trochoidal toolpath.
 
-![XY gantry: motor mounts, belt tensioners, carriage](/images/projects/panto-cnc/gantry-assembly.jpg)
-
 ### Z Axis
 
-A 3 N·m closed-loop NEMA 23 couples to the handwheel shaft via a custom HTD 3M pulley and sliding belt tensioner, with no modification to the original casting. Stall or torque overrun alarms grblHAL and triggers emergency stop. On an axis lifting ~35 kg, that was a reasonable safety measure, hence the closed loop stepper.
-
 ![Z axis motor assembly](/images/projects/panto-cnc/z-axis.jpg)
+
+A 3 N·m closed-loop NEMA 23 couples to the handwheel shaft via a custom HTD 3M pulley and sliding belt tensioner, with no modification to the original casting. Stall or torque overrun alarms grblHAL and triggers emergency stop. On an axis lifting ~35 kg, that was a reasonable safety measure, hence the closed loop stepper.
 
 ---
 
