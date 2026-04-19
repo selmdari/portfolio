@@ -6,7 +6,7 @@ declare module '@mkkellogg/gaussian-splats-3d' {
     stop(): void;
     dispose(): void;
   }
-  export class DropInViewer {
+export class DropInViewer {
     constructor(options?: Record<string, unknown>);
     addSplatScene(path: string, options?: Record<string, unknown>): Promise<void>;
   }

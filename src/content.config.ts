@@ -14,6 +14,7 @@ const projects = defineCollection({
     tools: z.array(z.string()).optional().default([]),
     featured: z.boolean().optional().default(false),
     splat: z.string().optional(),
+    splatPly: z.string().optional(),
     splatAnnotations: z.array(z.object({
       position: z.tuple([z.number(), z.number(), z.number()]),
       label: z.string(),
