@@ -1,0 +1,152 @@
+---
+title: "Preis 2D-4 Pantograph : Restauration et Conversion CNC"
+summary: "Une fraiseuse à pantographe Preis 2D-4 des années 1970, démontée jusqu'aux pièces de fonderie nues, restaurée et convertie en CNC 3 axes."
+thumbnail: /images/projects/panto-cnc/overall-view.jpg
+date: 2026-01
+disciplines:
+  - Mécanique
+  - Électronique
+  - Firmware
+  - Fabrication
+tools:
+  - grblHAL
+  - SKR2
+  - FDM
+processes:
+  - Restauration du mécanisme de pantographe
+  - Caractérisation de la déflexion
+  - Conception de portique cartésien 3 axes
+  - Dimensionnement et réglage de la transmission par courroie
+  - Matériel personnalisé imprimé en 3D
+  - Axe Z à boucle fermée NEMA 23
+  - Configuration et mise en service de grblHAL
+  - Câblage et protection de l'armoire électrique
+featured: true
+splat: /images/projects/panto-cnc/clean_20260415.splat
+splatPly: /images/projects/panto-cnc/panto_clean_raw.ply
+splatCameraPosition: [0, 5, 7]
+splatMinDistance: 7
+splatMaxDistance: 15
+splatModelY: 0.5
+splatOrbitAngle: 180
+splatAnnotations:
+  - position: [-0.21, 1.40, -0.86]
+    label: "Portique XY"
+  - position: [1.11, -1.40, 0.36]
+    label: "Armoire électrique"
+  - position: [0.32, -0.45, 1.69]
+    label: "Actionneur de l'axe Z en boucle fermée"
+  - position: [0.24, -0.59, -0.34]
+    label: "Câbles de contrôle et de signaux blindés"
+  - position: [-0.54, 1.48, 0.96]
+    label: "Tringlerie de réduction à 4 barres"
+---
+
+import AtAGlance from '../../src/components/AtAGlance.astro';
+
+<AtAGlance label="en bref">
+
+Une fraiseuse à pantographe Preis 2D-4 des années 1970, démontée jusqu'aux pièces de fonderie nues, restaurée et convertie en CNC 3 axes.
+En avance manuelle, les passes pleine largeur broutaient plus fort que la tringlerie ne pouvait l'absorber.
+Seules des passes peu profondes à grande vitesse et à avance constante donnaient un résultat propre — et aucun humain ne maintient une avance constante à la manivelle.
+J'ai donc tout refait de zéro : électronique, contrôleur, firmware.
+Le résultat : une précision de positionnement à vide de ±20 µm, excellente pour une machine aussi ancienne.
+
+</AtAGlance>
+
+---
+
+## Restauration
+
+Je l'ai achetée parce que les mécanismes de pantographe m'intéressent vraiment ; je voulais travailler sur l'un d'eux de mes propres mains.
+Une vraie CNC rigide est un projet futur.
+
+Elle venait d'un professionnel de l'industrie de la signalétique qui s'en était servi sans relâche pendant 40 ans.
+Aucun manuel n'était disponible sur Internet ; l'entreprise d'origine a disparu.
+Avant le démontage : documentation photographique complète de chaque composant, de l'orientation des roulements et des goupilles.
+Démontée jusqu'aux pièces de fonderie nues, nettoyée dans un bain à ultrasons, inspectée.
+![Images du processus de restauration](/images/projects/panto-cnc/pre-restoration-images.jpg)
+
+Chaque décision de remontage s'est appuyée sur la documentation photographique et les notes prises pendant le démontage : orientation des roulements, précontrainte, lubrification.
+La goupille de verrouillage sur la tête de la tringlerie était cassée ; j'en ai rectifié une à la main depuis une barre d'acier rond, avec la géométrie de came nécessaire pour verrouiller l'ensemble en place.
+
+Un changement structurel : la platine XY d'origine prenait sur la course Z.
+Je l'ai retirée et monté l'étau directement sur la console, gagnant ainsi de la hauteur utile pour des pièces plus grandes.
+
+Vérification de la déflexion post-remontage (comparateur à cadran, extrémité du stylet fixe, aucune charge de coupe, mesurée au centre de la course) :
+- X/Y : 20–25 microns
+- Z : ~75 microns
+
+Cohérent avec le comportement attendu d'un pantographe.
+Acceptable pour l'aluminium, le laiton et les plastiques durs aux avances prévues.
+La déflexion aux extrêmes de la course n'est pas caractérisée ; les tringleries de pantographe ont une souplesse variable selon la position, et je ne l'ai pas cartographiée. À pleine extension, elle augmente sensiblement.
+![Configuration de la mesure de déflexion](/images/projects/panto-cnc/deflection-measurement.jpg)
+
+---
+
+## Conversion CNC
+
+Les mesures de déflexion ont quantifié ce que l'avance manuelle avait déjà révélé : les passes pleine largeur produisaient du broutage que la tringlerie ne peut pas absorber.
+Des coupes peu profondes à grande vitesse avec une avance constante étaient la seule stratégie reproductible — et c'est impossible à tenir à la main.
+C'est précisément ce que la conversion CNC devait apporter.
+
+Le rapport de tringlerie a été fixé à 2:1, le plus grand ratio possible dans l'enveloppe physique de la machine.
+À 2:1, la course du portique de 460×300 mm correspond à une enveloppe de coupe de 230×150 mm. Le rapport est ajustable dans le firmware (pas-par-mm) ; pour des travaux de gravure fins, je peux le resserrer.
+Cela suppose un avantage mécanique constant sur toute la course — or la géométrie d'un pantographe fait que le rapport réel varie avec la position.
+Je n'ai pas observé cela comme un problème de précision à l'échelle actuelle, mais c'est non caractérisé ; à cartographier avant de viser des tolérances de gravure fines.
+
+### Portique XY
+
+![Portique XY : supports de moteur, tendeurs de courroie, chariot](/images/projects/panto-cnc/gantry-assembly.jpg)
+
+- Cartésien, extrusion 2020/2040, rails linéaires sur tous les axes
+- Supports de moteur, fixations et pièces de chariot conçus sur mesure et imprimés en 3D
+- Transmission par courroie partout ; les vis mères ont été écartées : trop lentes pour les avances HSM, et elles transmettraient probablement les vibrations directement dans la tringlerie
+- Double NEMA 17 sur X pour l'équerrage logiciel : à la prise d'origine, chaque moteur court jusqu'à son propre fin de course indépendamment, ce qui équerre le portique
+
+Moteurs : LDO 42STH48-2804AH (couple de maintien de 0,59 N·m).
+Les poulies GT2 20T donnent une force de courroie disponible de 185 N sur X (double moteur) et 93 N sur Y (simple).
+Le rapport de tringlerie 2:1 réduit de moitié la force du portique requise pour une charge de coupe donnée.
+Les trajectoires trochoïdales impliquent de nombreuses inversions courtes, donc l'accélération compte ; j'ai monté depuis les valeurs par défaut jusqu'à perdre des pas, puis reculé de 30 %.
+X s'est stabilisé à 700 mm/s², Y à 500 mm/s². Le moteur unique de Y est la contrainte limitante.
+Aluminium (6061) : 18k RPM, 800 mm/min, 4 mm DOC, 10 % WOC, trajectoire trochoïdale.
+
+### Axe Z
+
+![Assemblage du moteur de l'axe Z](/images/projects/panto-cnc/z-axis.jpg)
+
+Un NEMA 23 en boucle fermée de 3 N·m s'accouple à l'arbre du volant via une poulie HTD 3M sur mesure et un tendeur de courroie coulissant, sans toucher aux pièces de fonderie d'origine.
+Un calage ou un dépassement de couple alerte grblHAL et déclenche l'arrêt d'urgence.
+Sur un axe qui soulève ~35 kg, c'était une mesure de sécurité évidente — d'où le moteur pas à pas en boucle fermée.
+
+---
+
+## Électronique
+
+- Contrôleur : SKR2 (STM32F4), sous grblHAL, choisi pour le stockage des paramètres sur appareil, les communications bidirectionnelles et le développement actif
+- Broche : moteur à induction commuté par un contacteur de calibre approprié, piloté par relais depuis la sortie numérique du SKR2, normalement ouvert ; une perte de puissance ou un arrêt d'urgence fait tomber la broche
+- Alimentation : 24 V DC, 300 W. AC et DC physiquement séparés, croisements perpendiculaires, tous les passages en goulottes, toutes les extrémités serties, blocs de distribution codés par couleur
+- Câblage des fins de course : blindé, mis à la terre à une seule extrémité pour éviter les boucles de masse
+- Peignes à câbles partout : câbles moteurs pas à pas et fins de course physiquement séparés dans le faisceau pour réduire les EMI
+- Protection : fusible principal, fusible du SKR2, l'arrêt d'urgence coupe tout
+
+**Problème de mise en service :** le SKR2 sort des signaux pas/direction à 3,3 V ; le pilote Z en boucle fermée est instable en dessous de 5 V et perdait des pas par intermittence.
+Correction : un décaleur de niveau rapide à N-MOSFET en source commune sur veroboard. Pas élégant, mais stable.
+Toujours dans la machine, logé dans l'armoire électrique à l'abri des vibrations.
+![Armoire électrique : AC en haut, DC en bas, passages de câbles](/images/projects/panto-cnc/electronics-enclosure.jpg)
+
+---
+
+## Résultat
+
+Répétabilité commandée : ±10 microns sur les trois axes après compensation du jeu, mesurée par passages répétés sur une référence fixe avec un comparateur à cadran (sans charge de coupe).
+La précision absolue en coupe est limitée par la souplesse de la tringlerie : 20–25 microns X/Y, ~75 microns Z. Ces chiffres sont au centre de la course ; la souplesse augmente vers les extrêmes de l'enveloppe et la précision à ces extrêmes n'est pas caractérisée.
+
+Première réalisation : base mobile en aluminium 6061-T6 pour une plateforme robotique, 120×80×6 mm, fraise en bout de 1/4 pouce, surfaçage, fraisage de contour, poches circulaires, perçage.
+La pièce est une base de fixation modulaire avec un réseau de trous filetés M3 pour fixer différents modules.
+La tolérance de position XY (±0,05 mm) est la dimension critique — conforme aux spécifications.
+La profondeur Z (±0,10 mm) n'est pas une surface d'accouplement pour cette application.
+![Pièce usinée en cours : opérations de contour et de poche](/images/projects/panto-cnc/robot-platform.jpg)
+
+Ce projet m'a initié à la conception sérieuse d'armoires électriques : séparation AC/DC, intégrité du signal, EMI — et c'est la partie que j'ai trouvée la plus satisfaisante.
+10/10, je le referais.

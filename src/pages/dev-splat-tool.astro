@@ -3,7 +3,7 @@
 // Not linked from any public page. Access directly: /dev-splat-tool
 import { getCollection } from 'astro:content';
 
-const allProjects = await getCollection('projects');
+const allProjects = await getCollection('en');
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 const splatProjects = allProjects

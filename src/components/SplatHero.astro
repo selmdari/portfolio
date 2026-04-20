@@ -8,17 +8,19 @@ interface Props {
   maxDistance?: number;
   modelY?: number;
   orbitAngle?: number;
+  lang?: 'en' | 'fr';
 }
-const { splat, annotations = [], cameraPosition = [0, 7, 10], minDistance = 0, maxDistance = 25, modelY = 0, orbitAngle = 0 } = Astro.props;
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
+import { withBase } from '../lib/urls';
+import { t } from '../lib/i18n';
+const { splat, annotations = [], cameraPosition = [0, 7, 10], minDistance = 0, maxDistance = 25, modelY = 0, orbitAngle = 0, lang = 'en' } = Astro.props;
+const splatUrl = withBase(splat);
 ---
 
-<div class="splat-wrap" data-splat-url={splatUrl} data-camera-position={JSON.stringify(cameraPosition)} data-min-distance={minDistance} data-max-distance={maxDistance} data-model-y={modelY} data-orbit-angle={orbitAngle}>
+<div class="splat-wrap" data-splat-url={splatUrl} data-camera-position={JSON.stringify(cameraPosition)} data-min-distance={minDistance} data-max-distance={maxDistance} data-model-y={modelY} data-orbit-angle={orbitAngle} data-msg-loading={t(lang, 'splat.loading')} data-msg-hint={t(lang, 'splat.hint')} data-msg-resume={t(lang, 'splat.resume')}>
   <div class="splat-mount"></div>
-  <div class="splat-status">Loading 3D scan…</div>
-  <div class="splat-hint" hidden>Drag to rotate · Scroll to zoom</div>
-  <button class="splat-resume" hidden>↺ Resume 3D</button>
+  <div class="splat-status">{t(lang, 'splat.loading')}</div>
+  <div class="splat-hint" hidden>{t(lang, 'splat.hint')}</div>
+  <button class="splat-resume" hidden>{t(lang, 'splat.resume')}</button>
   <button class="splat-fs-btn" title="Fullscreen" hidden>⛶</button>
   <div class="splat-overlay">
     {annotations.map((ann, i) => (
@@ -98,6 +100,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
         URL.revokeObjectURL(blobUrl);
 
         status.textContent = '';
+        hint.textContent = wrap.dataset.msgHint!;
         hint.removeAttribute('hidden');
 
         const controls = (viewer as any).controls;
@@ -230,7 +233,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
   .splat-wrap {
     position: relative;
     width: 100%;
-    background: #0a0a0a;
+    background: var(--bg);
   }
 
   .splat-mount {
@@ -338,7 +341,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
     border: 1.5px solid rgba(232, 224, 208, 0.75);
     animation: splat-pulse 2.5s ease-in-out infinite;
     cursor: default;
-    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    transition: transform var(--transition), background var(--transition), border-color var(--transition);
   }
 
   .splat-marker:hover .splat-marker-dot {
@@ -362,7 +365,7 @@ const splatUrl = `${base}/${splat.replace(/^\//, '')}`;
     border-radius: var(--radius-sm);
     white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity var(--transition);
     pointer-events: none;
     letter-spacing: 0.02em;
   }

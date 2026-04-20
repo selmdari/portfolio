@@ -1,0 +1,131 @@
+---
+title: "Prototype de distributeur automatique de pilules"
+summary: "Conçu pour aider ma grand-mère à prendre deux pilules différentes à des heures différentes chaque jour, et me permettre de vérifier à distance qu'elle l'a bien fait. Canal sinusoïdal anti-blocage, moteur unique pour deux magasins par séquençage de mouvement, capteur de lumière pour confirmer la prise."
+thumbnail: /images/projects/automated-pill-dispenser/thumbnail.jpg
+date: 2025-04
+disciplines:
+  - CAO
+  - Électronique
+  - Firmware
+  - Conception
+tools:
+  - SolidWorks
+  - KiCad
+  - ESP8266
+  - Home Assistant
+  - MQTT
+  - FDM
+processes:
+  - Conception de pièces FDM sans support
+  - Charnière imprimée en place (print-in-place)
+  - Modélisation paramétrique par équations
+  - Dimensionnement d'engrenage à denture droite
+  - Profil de mouvement trapézoïdal
+  - Retour de position par encodeur
+  - Calibration de référence et détection différentielle par capteur de lumière ambiante
+  - Commutation de sortie par MOSFET
+  - Routage PCB
+  - Intégration MQTT
+featured: true
+splat: /images/projects/automated-pill-dispenser/pill-dispenser.splat
+splatCameraPosition: [0, 4, 6]
+splatMinDistance: 0
+splatMaxDistance: 25
+---
+
+import AtAGlance from '../../src/components/AtAGlance.astro';
+
+<AtAGlance label="en bref">
+
+Un distributeur de pilules de bureau que j'ai construit pour ma grand-mère. Deux pilules, deux horaires, tout automatisé.
+L'objectif : qu'elle prenne ses médicaments chaque jour sans avoir à y penser, et que je puisse confirmer à distance que c'est fait.
+Il tourne sur un horaire fixe, distribue chaque pilule à l'heure prévue et enregistre chaque prise dans Home Assistant via MQTT. Déployé chez elle depuis avril 2025.
+Le vrai défi : distribuer de façon fiable, avec une tolérance zéro pour les blocages ou les doses manquées. Un canal sinusoïdal courbe empêche physiquement les gélules de s'incliner. Un seul moteur à courant continu en boucle fermée entraîne les deux magasins par séquençage de mouvement. Un capteur de lumière ambiante confirme la distribution et la prise par détection différentielle.
+
+</AtAGlance>
+
+## Motivation
+
+Ma grand-mère prend une pilule chaque jour, à heure fixe.
+L'objectif : un distributeur fiable, capable de l'alerter au bon moment et de donner à la famille une confirmation à distance que la pilule a bien été prise — assez compact pour tenir sur sa table de nuit sans être encombrant.
+
+Les piluliers classiques demandent un remplissage hebdomadaire et ne confirment rien. Les distributeurs automatiques haut de gamme visent les milieux institutionnels et sont tarifés en conséquence. Rien n'existait dans cet espace pour une personne âgée vivant seule chez elle.
+
+La contrainte qui a guidé toutes les décisions de conception : un taux d'échec supérieur à zéro, c'est un échec tout court. Une dose manquée, ce n'est pas un résultat dégradé — c'est un risque pour sa santé.
+
+## Système mécanique
+
+### Le problème de l'empilement des gélules
+
+Le problème principal avec des gélules cylindriques dans un magasin vertical : l'inclinaison libre. Une gélule qui bascule au-delà de l'horizontale bloque le circuit d'alimentation.
+
+La première approche : orientation par vibrations — un contrepoids excentrique sur l'axe moteur, animé d'un mouvement de va-et-vient rapide dans une trémie en entonnoir.
+Deux raisons d'échec :
+
+1. L'orientation par vibrations est fondamentalement probabiliste.
+2. Les enrobages en gélatine génèrent un frottement élevé qui varie selon la pression d'entassement, le matériau de l'entonnoir et la rugosité des surfaces.
+
+La refonte a abandonné l'orientation active. La question s'est reformulée : quelle géométrie rend l'inclinaison physiquement impossible, plutôt que statistiquement improbable ?
+
+### Géométrie du magasin
+
+Le magasin repose sur un canal courbe continu — un profil sinusoïdal qui maintient chaque gélule contre la paroi, limitant l'inclinaison à environ 15 degrés.
+À cet angle, la gélule ne peut pas basculer à la verticale ; elle se recentre d'elle-même sous l'effet de la gravité.
+Le mode de défaillance est éliminé par la géométrie, pas par la détection ou la correction.
+![Coupe transversale du canal du magasin avec une gélule en position, points de contact annotés et limite d'inclinaison de 15 degrés](/images/projects/automated-pill-dispenser/magazine-channel-cross-section.jpg)
+
+Les 15 degrés n'étaient pas un chiffre calculé, mais un objectif de conception.
+La section du canal a été resserrée jusqu'à ce que le basculement à la verticale devienne géométriquement impossible, puis validée en CAO avant impression.
+La capacité est de 34 pilules — un mois à une par jour, plus une marge de quatre pilules, pour que la famille n'ait à le remplir qu'une fois par mois lors d'une visite.
+Le profil courbe compresse aussi le circuit d'alimentation dans une empreinte verticale réduite, ce qui garde l'appareil compact pour une table de nuit.
+
+### Mécanisme de distribution
+
+Un seul cylindre rotatif dessert les deux magasins. Le sens de rotation et la séquence de mouvement déterminent lequel distribue.
+Le barillet compte deux fentes à 180 degrés, une par pilule.
+![Schéma de mouvement montrant la séquence de distribution pour chaque pilule](/images/projects/automated-pill-dispenser/dispense-sequence.jpg)
+
+### Conception structurelle
+
+La base et le magasin sont des pièces monolithiques imprimées sans aucun support. L'orientation d'impression était une contrainte de conception de premier ordre. Le couvercle intègre une charnière imprimée en place (print-in-place).
+Le panneau avant est en acrylique — protection contre la poussière avec visibilité directe sur les pilules restantes, pour vérifier d'un coup d'œil lors des visites.
+
+## Actionnement et contrôle
+
+Un motoréducteur à courant continu entraîne le cylindre via un engrenage droit dimensionné pour le couple et la vitesse requis.
+Le retour de position repose sur un encodeur magnétique absolu AS5600. La référence absolue dans une plage inférieure à 360 degrés élimine les erreurs cumulatives et le besoin de recalage après chaque remise sous tension — indispensable pour un appareil qui doit reprendre son fonctionnement silencieusement après une coupure de courant.
+Le profil de mouvement est trapézoïdal, avec accélération et décélération contrôlées pour limiter le bruit mécanique.
+Un PID complet a été envisagé puis écarté : à faible vitesse et sous faible charge perturbatrice, un profilage de mouvement en boucle ouverte avec confirmation par encodeur suffit.
+Au démarrage, le système se positionne sur une référence d'origine connue. Les cycles de distribution sont déclenchés par commandes MQTT depuis Home Assistant, selon un horaire calé sur la routine médicamenteuse de ma grand-mère.
+
+## États du système et vérification
+
+![Diagramme d'état du système : Inactif, Distribution déclenchée, Cylindre en mouvement, En attente d'occlusion, Pilule détectée, En attente de retrait, Confirmé, Erreur, avec les transitions annotées des conditions de déclenchement et de la logique de délai d'attente](/images/projects/automated-pill-dispenser/system-state-diagram.svg)
+
+Avant chaque cycle, le capteur prend une mesure de référence de la lumière ambiante.
+Quand la pilule distribuée tombe, elle occulte le capteur. L'écart par rapport à la référence confirme qu'elle a bien quitté le magasin.
+Une LED clignotante signale à ma grand-mère que la pilule est prête à être prise.
+Quand elle la prend, le capteur revient à sa valeur de référence, l'indicateur s'éteint, et l'événement est enregistré dans Home Assistant — offrant à la famille une confirmation horodatée à distance.
+Si aucune occlusion n'est détectée après un cycle complet, le système enregistre une erreur. Le mode de défaillance est visible et consigné ; la famille peut être notifiée via les automatisations Home Assistant.
+
+## Électronique
+
+Le PCB est une carte polyvalente conçue et fabriquée pour un projet antérieur.
+Elle suit une architecture réutilisée sur plusieurs projets : module ESP8266 amovible, entrée jack baril 9–12 V, régulateur linéaire LM7805, sortie commutée par MOSFET pour les périphériques au-dessus de la tension logique, connecteurs I2C et GPIO. Ici, la sortie commutée pilote l'indicateur LED 12 V.
+
+![PCB avec le module MCU installé montrant les sorties MOSFET, les connecteurs d'en-tête et le connecteur de module](/images/projects/automated-pill-dispenser/pcb-mcu-seated.jpg)
+
+La carte a des faiblesses connues.
+Le plan de masse est remplacé par un remplissage quadrillé avec vias manuels.
+Le LM7805 convient à la faible consommation du microcontrôleur, mais reste thermiquement peu efficace comparé à un convertisseur buck.
+L'ESP8266 est aujourd'hui largement dépassé au profit des modules Espressif plus récents.
+La surface inutilisée augmente le coût unitaire et réduit la densité de panélisation.
+Une prochaine révision viserait une empreinte réduite, une entrée USB-C PD, une régulation buck et un ESP32 avec Zigbee/Thread pour une intégration native à Home Assistant.
+
+## Résultat
+
+![Distributeur automatique de pilules](/images/projects/automated-pill-dispenser/thumbnail.jpg)
+
+Le système fonctionne de façon autonome chez ma grand-mère sur horaire quotidien depuis avril 2025, sans aucune dose manquée.
+Le décompte de pilules à chaque remplissage correspond au nombre attendu, confirmant des performances mécaniques et de détection constantes sur la durée.
+**Périmètre :** Conçu et déployé pour un seul utilisateur âgé en milieu domestique. La logique de détection gère fiablement les conditions d'utilisation prévues. Les variations de lumière ambiante entre environnements, les géométries de gélules alternatives et l'usage multi-utilisateur ne sont pas pris en compte et demanderaient des développements supplémentaires.

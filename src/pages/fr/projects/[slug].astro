@@ -1,15 +1,15 @@
 ---
 import { getCollection, render } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import MdxImage from '../../components/MdxImage.astro';
-import SplatHero from '../../components/SplatHero.astro';
-import TableOfContents from '../../components/TableOfContents.astro';
-import { pillClass } from '../../lib/disciplines';
-import { withBase } from '../../lib/urls';
-import { disciplineLabel } from '../../lib/i18n';
+import Base from '../../../layouts/Base.astro';
+import MdxImage from '../../../components/MdxImage.astro';
+import SplatHero from '../../../components/SplatHero.astro';
+import TableOfContents from '../../../components/TableOfContents.astro';
+import { pillClass } from '../../../lib/disciplines';
+import { withBase } from '../../../lib/urls';
+import { disciplineLabel } from '../../../lib/i18n';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('en');
+  const projects = await getCollection('fr');
   return projects.map(project => ({
     params: { slug: project.id },
     props: { project },
@@ -22,11 +22,11 @@ const { title, summary, thumbnail, date, disciplines, splat, splatPly, showToc, 
 const showTocSidebar = showToc && headings.length > 0;
 ---
 
-<Base title={`${title} — Soufiane El Mdari`} description={summary} lang="en" localePath={`/fr/projects/${project.id}`}>
+<Base title={`${title} — Soufiane El Mdari`} description={summary} lang="fr" localePath={`/projects/${project.id}`}>
   <article>
     <header class="project-header">
       {!showTocSidebar && (
-        <a href={withBase('/')} class="back-link">← All projects</a>
+        <a href={withBase('/fr/')} class="back-link">← Tous les projets</a>
       )}
 
       <h1>{title}</h1>
@@ -34,7 +34,7 @@ const showTocSidebar = showToc && headings.length > 0;
       <div class="meta-row">
         <div class="pills">
           {disciplines.map(d => (
-            <span class={`pill pill-${pillClass(d)}`}>{disciplineLabel(d, 'en')}</span>
+            <span class={`pill pill-${pillClass(d)}`}>{disciplineLabel(d, 'fr')}</span>
           ))}
         </div>
         <span class="meta-date">{date}</span>
@@ -42,7 +42,7 @@ const showTocSidebar = showToc && headings.length > 0;
 
       <div class="hero-image">
         {splat
-          ? <SplatHero splat={splat} splatPly={splatPly} title={title} annotations={splatAnnotations} cameraPosition={splatCameraPosition} minDistance={splatMinDistance} maxDistance={splatMaxDistance} modelY={splatModelY} orbitAngle={splatOrbitAngle} lang="en" />
+          ? <SplatHero splat={splat} splatPly={splatPly} title={title} annotations={splatAnnotations} cameraPosition={splatCameraPosition} minDistance={splatMinDistance} maxDistance={splatMaxDistance} modelY={splatModelY} orbitAngle={splatOrbitAngle} lang="fr" />
           : <img src={withBase(thumbnail)} alt={title} />
         }
       </div>
@@ -54,7 +54,7 @@ const showTocSidebar = showToc && headings.length > 0;
           <Content components={{ img: MdxImage }} />
         </div>
         <aside class="toc-aside" id="toc-aside">
-          <TableOfContents headings={headings} lang="en" />
+          <TableOfContents headings={headings} lang="fr" />
         </aside>
       </div>
     ) : (
@@ -67,19 +67,15 @@ const showTocSidebar = showToc && headings.length > 0;
 
 {showTocSidebar && (
   <script>
-    import '../../scripts/toc-mobile';
+    import '../../../scripts/toc-mobile';
   </script>
 )}
 
 <style>
-  /* ── Article shell ─────────────────────────────────────────────────────── */
-  /* Base.astro's <main> already provides max-width: 1200px + margin: 0 auto.
-     The article fills that container; the two-column layout centers itself. */
   article {
     width: 100%;
   }
 
-  /* ── Project header ────────────────────────────────────────────────────── */
   .project-header {
     margin-bottom: 3.5rem;
   }
@@ -126,7 +122,6 @@ const showTocSidebar = showToc && headings.length > 0;
     gap: 5px;
   }
 
-  /* Smaller pill size for project header; color variants come from global.css */
   .pill {
     font-size: 0.68rem;
     padding: 3px 9px;
@@ -151,46 +146,40 @@ const showTocSidebar = showToc && headings.length > 0;
     display: block;
   }
 
-  /* ── Two-column layout (with TOC) ──────────────────────────────────────── */
   .content-layout {
     display: flex;
     flex-direction: row;
-    align-items: flex-start; /* lets sticky TOC stop at article end */
+    align-items: flex-start;
     gap: 3rem;
   }
 
   .prose {
     flex: 1;
-    min-width: 0; /* prevents flex overflow */
+    min-width: 0;
   }
 
   .toc-aside {
     width: 200px;
     flex-shrink: 0;
     position: sticky;
-    top: calc(56px + 2rem); /* header height + breathing room */
+    top: calc(56px + 2rem);
   }
 
-  /* ── Prose-only layout (no TOC) ────────────────────────────────────────── */
   .prose-solo {
     width: 100%;
   }
 
-  /* ── Mobile ─────────────────────────────────────────────────────────────── */
   @media (max-width: 700px) {
     .content-layout {
       flex-direction: column;
     }
 
-    /* TOC is moved by JS to appear after .at-a-glance;
-       reset sticky and width so it flows as a block. */
     .toc-aside {
       width: 100%;
       position: static;
     }
   }
 
-  /* ── Prose styles ───────────────────────────────────────────────────────── */
   .prose :global(h2),
   .prose-solo :global(h2) {
     font-size: 1.9rem;

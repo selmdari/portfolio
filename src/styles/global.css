@@ -1,15 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400&display=swap');
 
+/* Breakpoint convention: --bp-md = 700px. CSS vars can't be used inside
+   @media, so all mobile queries should be written as (max-width: 700px). */
+
 :root {
-  --bg: #0a0a0a;
-  --bg-card: #111111;
-  --bg-hover: #161616;
+  /* Background scale */
+  --bg:          #0a0a0a;
+  --bg-sunken:   #0e0e0e;
+  --bg-surface:  #111111;
+  --bg-hover:    #161616;
+  --bg-elevated: #171717;
+  --bg-card:     var(--bg-surface); /* alias — prefer --bg-surface in new code */
+
   --border: rgba(255,255,255,0.07);
   --border-hover: rgba(255,255,255,0.14);
-  --text-primary: #f0ede8;
+
+  --text-primary:   #f0ede8;
   --text-secondary: rgba(240, 237, 232, 0.658);
-  --text-tertiary: rgba(240, 237, 232, 0.719);
-  --accent: #e8e0d0;
+  --text-tertiary:  rgba(240, 237, 232, 0.719);
+  --accent:         #e8e0d0;
+
+  /* Opacity variants of --text-primary, for faded labels/overlays */
+  --text-fade-15: rgba(240, 237, 232, 0.15);
+  --text-fade-28: rgba(240, 237, 232, 0.28);
+  --text-fade-60: rgba(240, 237, 232, 0.60);
 
   --pill-hardware:    #2e1a1a; --pill-hardware-text:    #b86d6d;
   --pill-electronics: #2e1a1a; --pill-electronics-text: #b86d6d;
@@ -30,7 +44,18 @@
   --radius-md: 8px;
   --radius-lg: 12px;
 
-  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Spacing scale (4px base, rem-expressed) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 3rem;
+
+  --transition:      0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s  cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,8 +84,38 @@ h1, h2, h3, h4 {
 
 p { color: var(--text-secondary); }
 
-::selection { background: rgba(240,237,232,0.15); }
+::selection { background: var(--text-fade-15); }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+/* ── Shared component classes ───────────────────────────────────────────── */
+
+.pill {
+  font-size: 0.8rem;
+  font-weight: 400;
+  padding: 3px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.03em;
+}
+
+.pill-hardware    { background: var(--pill-hardware);    color: var(--pill-hardware-text); }
+.pill-electronics { background: var(--pill-electronics); color: var(--pill-electronics-text); }
+.pill-firmware    { background: var(--pill-firmware);    color: var(--pill-firmware-text); }
+.pill-robotics    { background: var(--pill-robotics);    color: var(--pill-robotics-text); }
+.pill-design      { background: var(--pill-design);      color: var(--pill-design-text); }
+.pill-fea         { background: var(--pill-fea);         color: var(--pill-fea-text); }
+.pill-structural  { background: var(--pill-structural);  color: var(--pill-structural-text); }
+.pill-civil       { background: var(--pill-civil);       color: var(--pill-civil-text); }
+.pill-mechanical  { background: var(--pill-mechanical);  color: var(--pill-mechanical-text); }
+.pill-software    { background: var(--pill-software);    color: var(--pill-software-text); }
+.pill-default     { background: var(--pill-default);     color: var(--pill-default-text); }
+
+.figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+  text-align: center;
+}

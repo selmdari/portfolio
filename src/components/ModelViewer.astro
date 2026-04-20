@@ -36,7 +36,7 @@ const {
       <div class="interaction-prompt" slot="interaction-prompt"></div>
     </model-viewer>
   </div>
-  {caption && <figcaption>{caption}</figcaption>}
+  {caption && <figcaption class="figcaption">{caption}</figcaption>}
 </figure>
 
 <script>
@@ -64,7 +64,7 @@ const {
     border-radius: var(--radius-lg);
     overflow: hidden;
     border: 1px solid var(--border);
-    background: #0e0e0e;
+    background: var(--bg-sunken);
   }
 
   model-viewer {
@@ -74,15 +74,7 @@ const {
     --progress-bar-height: 2px;
   }
 
-  figcaption {
-    margin-top: 0.6rem;
-    font-size: 0.78rem;
-    color: var(--text-tertiary);
-    font-style: italic;
-    text-align: center;
-  }
-
-  @media (max-width: 600px) {
+  @media (max-width: 700px) {
     model-viewer { height: 320px; }
   }
 </style>

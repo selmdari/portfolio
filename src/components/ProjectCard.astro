@@ -1,4 +1,8 @@
 ---
+import { pillClass } from '../lib/disciplines';
+import { withBase } from '../lib/urls';
+import { disciplineLabel, type Lang } from '../lib/i18n';
+
 export interface Props {
   title: string;
   summary: string;
@@ -9,36 +13,21 @@ export interface Props {
   tools: string[];
   slug: string;
   featured?: boolean;
+  lang?: Lang;
+  basePath?: string;
 }
 
-const { title, summary, thumbnail, date, disciplines, processes, tools, slug, featured } = Astro.props;
-
-function pillClass(discipline: string): string {
-  const key = discipline.toLowerCase().replace(/\s+/g, '-');
-  const map: Record<string, string> = {
-    'hardware': 'hardware',
-    'electronics': 'electronics',
-    'firmware': 'firmware',
-    'robotics': 'robotics',
-    'design': 'design',
-    'fea': 'fea',
-    'structural': 'structural',
-    'civil': 'civil',
-    'mechanical': 'mechanical',
-    'software': 'software',
-  };
-  return map[key] ?? 'default';
-}
+const { title, summary, thumbnail, date, disciplines, processes, tools, slug, featured, lang = 'en', basePath = '/projects/' } = Astro.props;
 ---
 
-<a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/projects/${slug}`} class:list={['card', { featured }]}>
+<a href={withBase(`${basePath}${slug}`)} class:list={['card', { featured }]}>
   <div class="thumb">
-    <img src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${thumbnail.replace(/^\//, '')}`} alt={title} loading="lazy" />
+    <img src={withBase(thumbnail)} alt={title} loading="lazy" />
     <div class="overlay">
       <p class="overlay-title">{title}</p>
       <div class="pills">
         {disciplines.map(d => (
-          <span class={`pill pill-${pillClass(d)}`}>{d}</span>
+          <span class={`pill pill-${pillClass(d)}`}>{disciplineLabel(d, lang)}</span>
         ))}
       </div>
       <p class="overlay-meta">
@@ -79,7 +68,7 @@ function pillClass(discipline: string): string {
     position: relative;
     aspect-ratio: 4/3;
     overflow: hidden;
-    background: #141414;
+    background: var(--bg-surface);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 
@@ -87,7 +76,7 @@ function pillClass(discipline: string): string {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform var(--transition-slow);
   }
 
   .card:hover .thumb img {
@@ -127,26 +116,6 @@ function pillClass(discipline: string): string {
     flex-wrap: wrap;
     gap: 4px;
   }
-
-  .pill {
-    font-size: 0.8rem;
-    font-weight: 400;
-    padding: 3px 10px;
-    border-radius: 99px;
-    letter-spacing: 0.03em;
-  }
-
-  .pill-hardware    { background: var(--pill-hardware);    color: var(--pill-hardware-text); }
-  .pill-electronics { background: var(--pill-electronics); color: var(--pill-electronics-text); }
-  .pill-firmware    { background: var(--pill-firmware);    color: var(--pill-firmware-text); }
-  .pill-robotics    { background: var(--pill-robotics);    color: var(--pill-robotics-text); }
-  .pill-design      { background: var(--pill-design);      color: var(--pill-design-text); }
-  .pill-fea         { background: var(--pill-fea);         color: var(--pill-fea-text); }
-  .pill-structural  { background: var(--pill-structural);  color: var(--pill-structural-text); }
-  .pill-civil       { background: var(--pill-civil);       color: var(--pill-civil-text); }
-  .pill-mechanical  { background: var(--pill-mechanical);  color: var(--pill-mechanical-text); }
-  .pill-software    { background: var(--pill-software);    color: var(--pill-software-text); }
-  .pill-default     { background: var(--pill-default);     color: var(--pill-default-text); }
 
   .overlay-meta {
     font-size: 0.82rem;

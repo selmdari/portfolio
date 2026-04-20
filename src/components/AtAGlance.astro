@@ -1,7 +1,11 @@
 ---
+interface Props {
+  label?: string;
+}
+const { label = 'TLDR' } = Astro.props;
 ---
 <div class="at-a-glance">
-  <span class="label">TLDR</span>
+  <span class="label">{label}</span>
   <div class="content">
     <slot />
   </div>
@@ -9,9 +13,9 @@
 
 <style>
   .at-a-glance {
-    background: #171717;
+    background: var(--bg-elevated);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem 1.75rem;
     margin: 2rem 0 2.75rem;
   }
@@ -21,7 +25,7 @@
     font-size: 1.6rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(240, 237, 232, 0.28);
+    color: var(--text-fade-28);
     margin-bottom: 0.5rem;
     font-family: var(--font-mono);
     font-weight: bold;
@@ -30,7 +34,7 @@
   .content :global(p) {
     font-size: 1.2rem;
     line-height: 1.6;
-    color: rgba(240, 237, 232, 0.6);
+    color: var(--text-fade-60);
     margin: 0;
     font-weight: 300;
   }

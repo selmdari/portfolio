@@ -1,9 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
-import Base from '../layouts/Base.astro';
-import ProjectCard from '../components/ProjectCard.astro';
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
 
-const allProjects = await getCollection('en');
+const allProjects = await getCollection('fr');
 const sorted = allProjects.sort((a, b) =>
   new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
@@ -11,9 +11,9 @@ const featured = sorted.filter(p => p.data.featured);
 const nonFeatured = sorted.filter(p => !p.data.featured);
 ---
 
-<Base title="Soufiane El Mdari — Engineering Portfolio" lang="en" localePath="/fr/">
+<Base title="Soufiane El Mdari — Portfolio Ingénierie" lang="fr" localePath="/">
   <section class="hero">
-    <h1>Engineering Portfolio</h1>
+    <h1>Portfolio Ingénierie</h1>
     <p class="about">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.</p>
   </section>
 
@@ -29,7 +29,8 @@ const nonFeatured = sorted.filter(p => !p.data.featured);
         tools={project.data.tools}
         slug={project.id}
         featured={project.data.featured}
-        lang="en"
+        lang="fr"
+        basePath="/fr/projects/"
       />
     ))}
   </div>
@@ -46,7 +47,8 @@ const nonFeatured = sorted.filter(p => !p.data.featured);
           tools={project.data.tools}
           slug={project.id}
           featured={project.data.featured}
-          lang="en"
+          lang="fr"
+          basePath="/fr/projects/"
         />
       ))}
     </div>

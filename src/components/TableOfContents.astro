@@ -7,14 +7,16 @@ interface Heading {
 
 interface Props {
   headings: Heading[];
+  lang?: 'en' | 'fr';
 }
 
-const { headings } = Astro.props;
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+import { withBase } from '../lib/urls';
+import { t } from '../lib/i18n';
+const { headings, lang = 'en' } = Astro.props;
 ---
 
 <nav class="toc" aria-label="Table of contents">
-  <a href={`${base}/`} class="toc-back">← Back to project list</a>
+  <a href={withBase(lang === 'en' ? '/' : '/fr/')} class="toc-back">{t(lang, 'nav.back')}</a>
 
   {headings.length > 0 && (
     <ul class="toc-list">
@@ -107,7 +109,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .toc-depth-6 { padding-left: 3rem; }
 
   /* Mobile: render as a styled card */
-  @media (max-width: 767px) {
+  @media (max-width: 700px) {
     .toc {
       padding: 1.25rem 1.5rem;
       background: var(--bg-card);
