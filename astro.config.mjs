@@ -60,7 +60,7 @@ export default defineConfig({
               res.setHeader('Content-Type', 'application/json');
               try {
                 const { slug, annotations } = JSON.parse(body);
-                const contentDir = resolve(process.cwd(), 'content/projects');
+                const contentDir = resolve(process.cwd(), 'content/en');
 
                 // Try .mdx first, then .md
                 let filePath = join(contentDir, `${slug}.mdx`);

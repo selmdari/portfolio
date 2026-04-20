@@ -38,4 +38,8 @@ const { label = 'TLDR' } = Astro.props;
     margin: 0;
     font-weight: 300;
   }
+
+  .content :global(p + p) {
+    margin-top: 0.75rem;
+  }
 </style>

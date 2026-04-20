@@ -46,72 +46,80 @@ import AtAGlance from '../../src/components/AtAGlance.astro';
 
 <AtAGlance>
 
-A 1970s Preis 2D-4 pantograph mill, stripped to bare castings, restored, and converted to 3-axis CNC. Under hand feed, full-width passes chattered harder than the linkage could absorb. Only shallow high-speed passes at a consistent feed ran clean, and no human hand-cranks a consistent feed. So I retrofitted electronics, control hardware, and firmware from scratch. The result: ±20 µm no-load positional accuracy, excellent for a machine this old.
+A pantograph is a mechanical copy milling machine; you trace a template with a stylus, and a four-bar linkage scales that motion and drives a cutter. Before CNC, operators traced physical templates by hand. I was designing mine in CAD and 3D printing them, but the hand was still in the loop, and every design change meant a reprint.
+
+**The fix:** replace the hand with a motorized XY gantry that executes a CAM path directly. The gantry couples to the pantograph's stylus arm through a lathe-turned adapter; the linkage does the rest. No physical template, no operator. CAD to cut in one step.
+
+That required restoring a machine with no surviving documentation, designing and building a 3-axis motion system from scratch, and wiring a proper electronics cabinet. End result: ±20 µm positional accuracy and a workflow that goes straight from CAM to part.
 
 </AtAGlance>
 
 ---
 
+## The problem with hand tracing
+
+When I acquired the machine, I replaced the wood / brass templates with 3D printed ones. The workflow was: model the part in CAD, print a scaled template, clamp it to the table, and trace it by hand with the stylus. It worked, but it had serious limitations.
+
+Every design iteration required a reprint. Surface finish depended on how steadily I could drag the stylus. More importantly, the template was already a digital file, the physical copy was a detour. The logical step was to remove the hand entirely: replace the stylus with a motorized gantry that reads a CAM file and traces the path itself.
+
+![Pantograph being operated with a hand stylus](/images/projects/panto-cnc/pantograph-image-inuse.jpg)
+
+---
+
 ## Restoration
 
-I bought this because pantograph mechanisms are genuinely interesting to me; I wanted to work on one hands-on. A proper rigid CNC is a future project.
+Before adding a digital brain to the pantograph, it needed a proper rebuild. Despite my best efforts, I couldn't find a maintenance manual for this machine; the original company went out of business in the 90s. Before disassembly I documented everything photographically (every component, bearing orientation, and pin) because reassembly would rely entirely on those records.
 
-It came from a professional in the signage industry who had run it hard for 40 years. No manuals for the machine were available on the internet; the original company is gone. Before disassembly: full photographic documentation of every component, bearing orientation, and pin. Stripped to bare castings, cleaned in an ultrasonic bath, inspected.
+The castings were cleaned manually and repainted. Smaller parts went through an ultrasonic bath. Every reassembly decision came from the photos and disassembly notes: bearing orientation, preload, lubrication. The locking pin on the linkage head was snapped; I reground a replacement from steel round stock by hand, with the cam geometry needed to lock the linkage assembly in place.
 
 ![Restoration process images](/images/projects/panto-cnc/pre-restoration-images.jpg)
 
-
-Every reassembly decision came from the photographic documentation and notes I took during disassembly: bearing orientation, preload, lubrication. The locking pin on the linkage head was snapped; I reground a replacement from steel round stock by hand, with the cam geometry needed to lock the linkage assembly in place.
-
 One structural change: the original XY stage consumed Z travel. I removed it and mounted the vise directly to the knee, recovering clearance for taller stock.
-
-Post-reassembly deflection check (dial indicator, stylus end fixed, no cutting load, measured at center of travel):
-- X/Y: 20–25 microns
-- Z: ~75 microns
-
-Consistent with pantograph behavior. Within tolerance for aluminum, brass, and hard plastics at intended feeds. Deflection at the extremes of travel is uncharacterized; pantograph linkages have position-dependent compliance, and I haven't mapped it. At full extension the linkage compliance increases noticeably.
-
-![deflection measurement set up](/images/projects/panto-cnc/deflection-measurement.jpg)
 
 ---
 
 ## CNC Conversion
 
-The deflection measurements put a number on what hand-feed had already shown: full-width passes produced chatter the linkage can't absorb. High-speed shallow cuts at consistent feed were the only repeatable strategy, and that can't be executed by hand. That's what the CNC conversion needed to deliver.
+### Concept
 
-Linkage ratio set to 2:1, the largest ratio that fits the physical envelope of the machine. At 2:1, gantry travel of 460×300mm maps to a 230×150mm cutting envelope. The ratio is adjustable in firmware (steps-per-mm); for fine engraving work I can tighten it. This assumes constant mechanical advantage across travel — pantograph geometry means the actual ratio varies with position. Not observed as an accuracy problem at current scales, but uncharacterized; worth mapping before pushing to fine engraving tolerances.
+The XY gantry replaces the hand. The stylus arm that the operator used to trace templates is now coupled to the gantry carriage. The gantry executes the CAM path; the pantograph linkage scales that motion and drives the cutter.
+
+The linkage ratio is set to 2:1; the largest ratio that fits the machine's physical envelope. At 2:1, gantry travel of 460x300 mm maps to a 230x150 mm cutting envelope. The reduction ratio also scales down the force the gantry needs to exert: at 2:1, the gantry sees half the force present at the cutter. The ratio is set in two places together: mechanically, by adjusting the pivot positions on the linkage arms using the engraved scales, and in firmware, by updating steps-per-mm to match. Keeping both in sync means the CAM side always works at 1:1, no scaling in the toolpath. It also means dialing in a finer ratio for detailed work is straightforward: adjust the linkage, update steps-per-mm, done.
+
+Pantograph geometry means the reduction ratio is not perfectly constant across the full range of motion, but that has not been a problem for my current use.
+
+### The stylus adapter
+
+The connection between the gantry carriage and the pantograph's control arm required a lathe-turned stepped shaft. One end is 3/16 in nominal to fit the machine's existing stylus collet; the other is 16 mm for a tight sliding fit into the bearing bore on the gantry carriage. The 16 mm bearing spec was chosen to reduce friction at the stylus-gantry interface. This adapter is the single part that physically connects the digital motion system to the original analog machine.
 
 ### XY Gantry
 
 ![XY gantry: motor mounts, belt tensioners, carriage](/images/projects/panto-cnc/gantry-assembly.jpg)
 
-- Cartesian, 2020/2040 extrusion, linear rails on all axes
-- Custom-designed and 3D printed motor mounts, brackets, carriage parts
-- Belt drive throughout; lead screws rejected: too slow for HSM feed rates, and they would likely transmit vibration directly into the linkage
-- Dual NEMA 17s on X for software tramming: at homing, each motor runs to its own limit switch independently, squaring the gantry
+Cartesian frame, 2020/2040 extrusion, linear rails on all axes. All structural brackets and motor mounts are custom-designed and 3D printed. Belt drive throughout, lead screws were rejected for being too slow at the feed rates this machine needs and the mechanical advantage of the linkage meant a direct drive belt would be enough.
 
-Motors: LDO 42STH48-2804AH (0.59 N·m holding torque). GT2 20T pulleys give 185N available belt force on X (dual motor) and 93N on Y (single). The 2:1 linkage ratio halves the gantry force required for a given cutter load. Trochoidal toolpaths make many short direction reversals, so higher acceleration matters; I increased from defaults until steps started dropping, then backed off 30%. X settled at 700 mm/s², Y at 500 mm/s². Y's single motor is the binding constraint.
+I settled on LDO 42STH48-2804AH NEMA 17 stepper motors (0.59 N·m holding torque). GT2 20T pulleys give 185 N available belt force on X (dual motor) and 93 N on Y (single). Acceleration was tuned empirically: increased from defaults until steps dropped, then backed off 30%. X settled at 700 mm/s², Y at 500 mm/s². Y's single motor is the binding constraint.
 
-Aluminum (6061): 18k RPM, 800 mm/min, 4mm DOC, 10% WOC, trochoidal toolpath.
+Dual NEMA 17s on X enable software tramming: at homing, each motor runs independently to its own limit switch, squaring the gantry without manual adjustment.
 
 ### Z Axis
 
 ![Z axis motor assembly](/images/projects/panto-cnc/z-axis.jpg)
 
-A 3 N·m closed-loop NEMA 23 couples to the handwheel shaft via a custom HTD 3M pulley and sliding belt tensioner, with no modification to the original casting. Stall or torque overrun alarms grblHAL and triggers emergency stop. On an axis lifting ~35 kg, that was a reasonable safety measure, hence the closed loop stepper.
+To size the Z-axis motor, I measured the handwheel torque required to lift the knee at 1.4 N.m. With a planned reduction of 3:1, I selected a 3 N·m closed-loop NEMA 23 coupled to the handwheel shaft via a custom HTD 3M pulley and sliding belt tensioner (the Safety Factor is quite high at 6.4). The closed-loop driver reports stall and torque overrun to grblHAL, which triggers an emergency stop. On an axis lifting ~40 kg, the high safety factor and alarm feedback seemed like the safe choice.
 
 ---
 
 ## Electronics
 
-- Controller: SKR2 (STM32F4), running grblHAL, chosen for on-device settings storage, bidirectional comms, active development
-- Spindle: induction motor switched by an appropriately rated contactor, relay-driven from SKR2 digital output, normally open; power loss or E-stop drops the spindle
-- Power: 24V DC, 300W supply. AC and DC physically separated, crossings perpendicular, all runs in cable ducting, all ends crimped and distribution blocks color coded
-- Limit switch wiring: shielded, single-end grounded to prevent ground loops
+- Controller: SKR2 (STM32F4), running grblHAL firmware, chosen because it's open source and under active development.
+- Spindle: induction motor switched by a rated contactor, relay-driven from SKR2 digital output, normally open; power loss or E-stop drops the spindle
+- Power: 24 V DC, 300 W supply. AC and DC physically separated, crossings perpendicular, all runs in cable ducting, all ends crimped, distribution blocks color coded
+- Signal wiring: shielded, single-end grounded to prevent ground loops (for steppers and limit switches)
 - Cable combs throughout: stepper and end-stop cables physically separated in the harness to reduce EMI
 - Protection: main fuse, SKR2 fuse, E-stop cuts everything
 
-**Commissioning problem:** SKR2 outputs step/direction at 3.3V; the closed-loop Z driver is unstable below 5V and intermittently missed steps. Fix: a quick common-source N-MOSFET level shifter on veroboard. Not elegant, but stable. Still in the machine, housed inside the electronics enclosure away from machine vibration.
+**Step/dir signal conditioning:** The SKR2 outputs step and direction signals at 3.3 V. The closed-loop Z driver requires 5 V for stable operation, so I built a common-source N-MOSFET level shifter on veroboard to bring the signals up. A quick build that works cleanly for this use case. It lives inside the electronics enclosure, away from machine vibration.
 
 ![Electronics enclosure: AC top, DC bottom, cable runs](/images/projects/panto-cnc/electronics-enclosure.jpg)
 
@@ -119,10 +127,14 @@ A 3 N·m closed-loop NEMA 23 couples to the handwheel shaft via a custom HTD 3M 
 
 ## Result
 
-Commanded repeatability: ±10 microns on all three axes after backlash compensation, measured by repeated passes over a fixed reference with a dial indicator (no cutting load). Absolute accuracy under cutting is limited by linkage compliance: 20–25 microns X/Y, ~75 microns Z. These figures are at center of travel; compliance increases toward the extremes of the cutting envelope and accuracy there is uncharacterized.
+The workflow goal is met: CAD -> CAM -> gcode -> part, no physical template, no hand tracing.
 
-First output: 6061-T6 aluminum moving base for a robotic platform, 120×80×6mm, 1/4in end mill, face milling, contour milling, circular pocketing, drilling. The part is a modular fixture base with an M3 threaded hole pattern for attaching different modules. XY position tolerance (±0.05 mm) is the critical dimension — within spec. Z depth (±0.10 mm) isn't a mating surface for this application.
+Commanded repeatability: ±10 microns on all three axes after backlash compensation, measured by repeated passes over a fixed reference with a dial indicator under no cutting load. Absolute accuracy under cutting is bounded by linkage compliance: 20--25 microns X/Y, ~75 microns Z, at center of travel.
+
+![Repeatability measurement](/images/projects/panto-cnc/repeatability-measurement.jpg)
+
+First output: a 6061-T6 aluminum moving base for a robotic platform, 120×80×6 mm, 1/4 in end mill, face milling, contour milling, circular pocketing, drilling. XY position tolerance ±0.05 mm -- within spec.
 
 ![Machined part in progress: contour and pocket operations](/images/projects/panto-cnc/robot-platform.jpg)
 
-This project was my introduction to proper electrical cabinet design: AC/DC separation, signal integrity, EMI, and that turned out to be the most satisfying part. 10/10 would do it again.
+This project was my introduction to proper electrical cabinet design: AC/DC separation, signal integrity, EMI. That turned out to be the most satisfying part.
